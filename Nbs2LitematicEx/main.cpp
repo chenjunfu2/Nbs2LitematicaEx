@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <stdint.h>
+#include <filesystem>
 
 struct MyNote
 {
@@ -39,6 +40,16 @@ MyNoteList ToMyNoteList(const NBS_File &fNBS)
 
 int main(int argc, char *argv[])
 {
+	if (argc != 2)
+	{
+		return -1;
+	}
+
+	std::filesystem::path pathFile = argv[1];
+
+
+
+
 
 
 
