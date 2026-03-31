@@ -66,9 +66,20 @@ InstGroupNote ToInstMap(MyNoteList &listNote)
 	}
 
 	std::ranges::sort(listNote,
-		[](const MyNote &l, const MyNote &r) -> bool
+		[](const MyNote &l, const MyNote &r) -> bool //升序排列，先按照组，然后按照tick，最后按照key
 		{
-			return l.instrument != r.instrument ? l.instrument < r.instrument : l.tick < r.tick;//升序排列，先按照组，然后按照tick
+			if (l.instrument != r.instrument)
+			{
+				return l.instrument < r.instrument;
+			}
+			else if (l.tick != r.tick)
+			{
+				return l.tick < r.tick;
+			}
+			else
+			{
+				return l.key < r.key;
+			}
 		}
 	);
 
@@ -111,7 +122,7 @@ int main(int argc, char *argv[]) try
 		print("====================\nInst: [{}], Count: [{}]\n", it.front().instrument, it.size());
 		for (auto &note : it)
 		{
-			print("   Tick: [{}], Key: [{}]\n", note.tick, note.key);
+			print("\tTick: [{}], Key: [{}]\n", note.tick, note.key);
 		}
 	}
 	print("====================\n");
