@@ -1,9 +1,29 @@
 ﻿#include <nbt_cpp/NBT_All.hpp>
 #include <nbs_cpp/NBS_All.hpp>
 
-#include <vector>
+#include <util/MyAssert.hpp>
+
 #include <stdint.h>
-#include <filesystem>
+#include <stdexcept>
+#include <algorithm>
+#include <ranges>
+
+#include <vector>
+#include <unordered_map>
+
+template<typename... Args>
+void print(std::format_string<Args...> fmt, Args&&... args)
+{
+	std::string output = std::format(fmt, std::forward<Args>(args)...);
+	fwrite(output.data(), 1, output.size(), stdout);
+}
+
+template<typename... Args>
+void printerr(std::format_string<Args...> fmt, Args&&... args)
+{
+	std::string output = std::format(fmt, std::forward<Args>(args)...);
+	fwrite(output.data(), 1, output.size(), stderr);
+}
 
 struct MyNote
 {
@@ -36,30 +56,71 @@ MyNoteList ToMyNoteList(const NBS_File &fNBS)
 	return listMyNote;
 }
 
+using InstGroupNote = std::vector<MyNoteList>;
 
-
-int main(int argc, char *argv[])
+InstGroupNote ToInstMap(MyNoteList &listNote)
 {
-	if (argc != 2)
+	if (listNote.empty())
 	{
-		return -1;
+		return {};
 	}
 
-	std::filesystem::path pathFile = argv[1];
+	std::ranges::sort(listNote,
+		[](const MyNote &l, const MyNote &r) -> bool
+		{
+			return l.instrument < r.instrument;//升序排列
+		}
+	);
 
+	InstGroupNote groupNote;
+	NBS_File::BYTE bLastInstrument = listNote.front().instrument;
+	MyNoteList tempList;
+	for (auto &it : listNote)
+	{
+		if (bLastInstrument != it.instrument)
+		{
+			bLastInstrument = it.instrument;
+			groupNote.push_back(std::move(tempList));
+			tempList.clear();
+		}
+		//不论如何都插入，如果遇到不等的情况，上面会进行清理
+		tempList.push_back(std::move(it));
+	}
 
+	return groupNote;
+}
 
+int main(int argc, char *argv[]) try
+{
+	MyAssert(argc == 2);
+	NBS_File nbs;
+	MyAssert(NBS_IO::ReadNBSFromFile(nbs, argv[1]));
 
+	//提取关键信息
+	auto noteList = ToMyNoteList(nbs);
+	nbs.~NBS_File();
 
+	//根据音符类型拆散
+	auto groupNote = ToInstMap(noteList);
+	noteList.~vector();
 
-
-
-
-
-
-
-
-
+	//现在，map的每个音，后面跟着若干音符
+	//输出一下看看
+	for (auto &it : groupNote)
+	{
+		print("====================\nInst: [{}], Count: [{}]\n", it.front().instrument, it.size());
+		for (auto &note : it)
+		{
+			print("   Tick: [{}], Key: [{}]\n", note.tick, note.key);
+		}
+		print("\n");
+	}
+	print("====================\n");
 
 	return 0;
+}
+catch (const std::exception &e)
+{
+	printerr("catch std::exception: [{}]", e.what());
+	throw e;
 }
