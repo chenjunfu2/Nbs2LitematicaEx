@@ -45,10 +45,10 @@ public:
 		SHORT song_layers;				//歌曲总层数
 
 		//歌曲元数据
-		STR song_name;			//歌曲名称
-		STR song_author;		//歌曲作者
-		STR original_author;	//原曲作者（改编时使用）
-		STR description;		//歌曲描述/备注
+		STR song_name;					//歌曲名称
+		STR song_author;				//歌曲作者
+		STR original_author;			//原曲作者（改编时使用）
+		STR description;				//歌曲描述/备注
 
 		//播放设置
 		SHORT tempo;					//速度值，存储为整数，实际速度 = tempo / 100.0，默认1000对应10.0，读取后float ftempo = tempo/100.0，存储时tempo = (SHORT)(ftempo*100.0)
@@ -64,7 +64,7 @@ public:
 		INT blocks_removed;				//移除的方块总数
 
 		//来源信息
-		STR song_origin;		//歌曲来源标识
+		STR song_origin;				//歌曲来源标识
 
 		//循环设置
 		BOOL loop;						//version >= 4：是否启用循环播放
@@ -111,7 +111,7 @@ public:
 	struct Layer
 	{
 		SHORT id;			//层索引
-		STR name;	//层名称
+		STR name;			//层名称
 		BOOL lock;			//是否锁定（静音） (v4+)
 		BYTE volume;		//音量 (0-100)
 		BYTE panning;		//声像 (-100 到 100, 0为中央, 默认100)，使用的时候需-100获得实际值，存储时无符号需要+100
@@ -131,8 +131,8 @@ public:
 	struct Instrument
 	{
 		INT id;				//乐器ID（在乐器列表中的索引，从0开始）
-		STR name;	//乐器名称
-		STR file;	//自定义音效文件路径（空字符串表示使用默认音色）
+		STR name;			//乐器名称
+		STR file;			//自定义音效文件路径（空字符串表示使用默认音色）
 		BYTE pitch;			//音高偏移（默认45，对应C#，范围0-255）
 		BOOL press_key;		//是否按下按键（默认true）
 	};
