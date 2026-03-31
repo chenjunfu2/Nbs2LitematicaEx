@@ -98,6 +98,12 @@ InstGroupNote ToInstMap(MyNoteList &listNote)
 		tempList.push_back(std::move(it));
 	}
 
+	//如果最后一个不为空，那么插入最终的值
+	if (!tempList.empty())
+	{
+		groupNote.push_back(std::move(tempList));
+	}
+
 	return groupNote;
 }
 
@@ -119,13 +125,13 @@ int main(int argc, char *argv[]) try
 	//输出一下看看
 	for (auto &it : groupNote)
 	{
-		print("====================\nInst: [{}], Count: [{}]\n", it.front().instrument, it.size());
+		print("========================================\nInst: [{}], Count: [{}]\n", it.front().instrument, it.size());
 		for (auto &note : it)
 		{
 			print("\tTick: [{}], Key: [{}]\n", note.tick, note.key);
 		}
 	}
-	print("====================\n");
+	print("========================================\n");
 
 	return 0;
 }
