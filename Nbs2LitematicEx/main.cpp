@@ -68,7 +68,7 @@ InstGroupNote ToInstMap(MyNoteList &listNote)
 	std::ranges::sort(listNote,
 		[](const MyNote &l, const MyNote &r) -> bool
 		{
-			return l.instrument < r.instrument;//升序排列
+			return l.instrument != r.instrument ? l.instrument < r.instrument : l.tick < r.tick;//升序排列，先按照组，然后按照tick
 		}
 	);
 
