@@ -113,7 +113,6 @@ int main(int argc, char *argv[]) try
 		{
 			print("   Tick: [{}], Key: [{}]\n", note.tick, note.key);
 		}
-		print("\n");
 	}
 	print("====================\n");
 
