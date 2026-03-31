@@ -1,0 +1,92 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.37027.11
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Nbs2LitematicEx", "Nbs2LitematicEx\Nbs2LitematicEx.vcxproj", "{C2E39D1F-DDAE-4F38-B598-E8C427346E49}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xxhash", "Dependencies\xxhash\xxhash.vcxproj", "{DC504567-A6FA-4E8F-A354-E1ECFDDE5D81}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "zlib", "Dependencies\zlib\zlib.vcxproj", "{E304062B-8190-4215-AFFE-D2BF30DE6600}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Dependencies", "Dependencies", "{86E3831B-7B2B-4BB2-8DFF-9DD3EDDD59D2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nbs_cpp", "nbs_cpp", "{02C8004B-9EDB-4348-A84D-62FDA75B613E}"
+	ProjectSection(SolutionItems) = preProject
+		Dependencies\nbs_cpp\NBS_All.hpp = Dependencies\nbs_cpp\NBS_All.hpp
+		Dependencies\nbs_cpp\NBS_Endian.hpp = Dependencies\nbs_cpp\NBS_Endian.hpp
+		Dependencies\nbs_cpp\NBS_File.hpp = Dependencies\nbs_cpp\NBS_File.hpp
+		Dependencies\nbs_cpp\NBS_IO.hpp = Dependencies\nbs_cpp\NBS_IO.hpp
+		Dependencies\nbs_cpp\NBS_Reader.hpp = Dependencies\nbs_cpp\NBS_Reader.hpp
+		Dependencies\nbs_cpp\NBS_Writer.hpp = Dependencies\nbs_cpp\NBS_Writer.hpp
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nbt_cpp", "nbt_cpp", "{5967CDB6-1301-4944-AA27-3B7E338A9CDE}"
+	ProjectSection(SolutionItems) = preProject
+		Dependencies\nbt_cpp\Compiler_Define.h = Dependencies\nbt_cpp\Compiler_Define.h
+		Dependencies\nbt_cpp\MUTF8_Tool.hpp = Dependencies\nbt_cpp\MUTF8_Tool.hpp
+		Dependencies\nbt_cpp\NBT_All.hpp = Dependencies\nbt_cpp\NBT_All.hpp
+		Dependencies\nbt_cpp\NBT_Array.hpp = Dependencies\nbt_cpp\NBT_Array.hpp
+		Dependencies\nbt_cpp\NBT_Compound.hpp = Dependencies\nbt_cpp\NBT_Compound.hpp
+		Dependencies\nbt_cpp\NBT_Endian.hpp = Dependencies\nbt_cpp\NBT_Endian.hpp
+		Dependencies\nbt_cpp\NBT_Hash.hpp = Dependencies\nbt_cpp\NBT_Hash.hpp
+		Dependencies\nbt_cpp\NBT_Helper.hpp = Dependencies\nbt_cpp\NBT_Helper.hpp
+		Dependencies\nbt_cpp\NBT_IO.hpp = Dependencies\nbt_cpp\NBT_IO.hpp
+		Dependencies\nbt_cpp\NBT_List.hpp = Dependencies\nbt_cpp\NBT_List.hpp
+		Dependencies\nbt_cpp\NBT_Node.hpp = Dependencies\nbt_cpp\NBT_Node.hpp
+		Dependencies\nbt_cpp\NBT_Node_View.hpp = Dependencies\nbt_cpp\NBT_Node_View.hpp
+		Dependencies\nbt_cpp\NBT_Print.hpp = Dependencies\nbt_cpp\NBT_Print.hpp
+		Dependencies\nbt_cpp\NBT_Reader.hpp = Dependencies\nbt_cpp\NBT_Reader.hpp
+		Dependencies\nbt_cpp\NBT_Scanner.hpp = Dependencies\nbt_cpp\NBT_Scanner.hpp
+		Dependencies\nbt_cpp\NBT_String.hpp = Dependencies\nbt_cpp\NBT_String.hpp
+		Dependencies\nbt_cpp\NBT_TAG.hpp = Dependencies\nbt_cpp\NBT_TAG.hpp
+		Dependencies\nbt_cpp\NBT_Type.hpp = Dependencies\nbt_cpp\NBT_Type.hpp
+		Dependencies\nbt_cpp\NBT_Visitor.hpp = Dependencies\nbt_cpp\NBT_Visitor.hpp
+		Dependencies\nbt_cpp\NBT_Writer.hpp = Dependencies\nbt_cpp\NBT_Writer.hpp
+		Dependencies\nbt_cpp\vcpkg_config.h = Dependencies\nbt_cpp\vcpkg_config.h
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C2E39D1F-DDAE-4F38-B598-E8C427346E49}.Debug|x64.ActiveCfg = Debug|x64
+		{C2E39D1F-DDAE-4F38-B598-E8C427346E49}.Debug|x64.Build.0 = Debug|x64
+		{C2E39D1F-DDAE-4F38-B598-E8C427346E49}.Debug|x86.ActiveCfg = Debug|Win32
+		{C2E39D1F-DDAE-4F38-B598-E8C427346E49}.Debug|x86.Build.0 = Debug|Win32
+		{C2E39D1F-DDAE-4F38-B598-E8C427346E49}.Release|x64.ActiveCfg = Release|x64
+		{C2E39D1F-DDAE-4F38-B598-E8C427346E49}.Release|x64.Build.0 = Release|x64
+		{C2E39D1F-DDAE-4F38-B598-E8C427346E49}.Release|x86.ActiveCfg = Release|Win32
+		{C2E39D1F-DDAE-4F38-B598-E8C427346E49}.Release|x86.Build.0 = Release|Win32
+		{DC504567-A6FA-4E8F-A354-E1ECFDDE5D81}.Debug|x64.ActiveCfg = Debug|x64
+		{DC504567-A6FA-4E8F-A354-E1ECFDDE5D81}.Debug|x64.Build.0 = Debug|x64
+		{DC504567-A6FA-4E8F-A354-E1ECFDDE5D81}.Debug|x86.ActiveCfg = Debug|Win32
+		{DC504567-A6FA-4E8F-A354-E1ECFDDE5D81}.Debug|x86.Build.0 = Debug|Win32
+		{DC504567-A6FA-4E8F-A354-E1ECFDDE5D81}.Release|x64.ActiveCfg = Release|x64
+		{DC504567-A6FA-4E8F-A354-E1ECFDDE5D81}.Release|x64.Build.0 = Release|x64
+		{DC504567-A6FA-4E8F-A354-E1ECFDDE5D81}.Release|x86.ActiveCfg = Release|Win32
+		{DC504567-A6FA-4E8F-A354-E1ECFDDE5D81}.Release|x86.Build.0 = Release|Win32
+		{E304062B-8190-4215-AFFE-D2BF30DE6600}.Debug|x64.ActiveCfg = Debug|x64
+		{E304062B-8190-4215-AFFE-D2BF30DE6600}.Debug|x64.Build.0 = Debug|x64
+		{E304062B-8190-4215-AFFE-D2BF30DE6600}.Debug|x86.ActiveCfg = Debug|Win32
+		{E304062B-8190-4215-AFFE-D2BF30DE6600}.Debug|x86.Build.0 = Debug|Win32
+		{E304062B-8190-4215-AFFE-D2BF30DE6600}.Release|x64.ActiveCfg = Release|x64
+		{E304062B-8190-4215-AFFE-D2BF30DE6600}.Release|x64.Build.0 = Release|x64
+		{E304062B-8190-4215-AFFE-D2BF30DE6600}.Release|x86.ActiveCfg = Release|Win32
+		{E304062B-8190-4215-AFFE-D2BF30DE6600}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{02C8004B-9EDB-4348-A84D-62FDA75B613E} = {86E3831B-7B2B-4BB2-8DFF-9DD3EDDD59D2}
+		{5967CDB6-1301-4944-AA27-3B7E338A9CDE} = {86E3831B-7B2B-4BB2-8DFF-9DD3EDDD59D2}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DC71A350-56DA-4589-993F-B15ED4565442}
+	EndGlobalSection
+EndGlobal
