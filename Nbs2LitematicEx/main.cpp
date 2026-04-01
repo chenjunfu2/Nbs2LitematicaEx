@@ -165,9 +165,16 @@ namespace std
 
 struct MyNote
 {
+public:
 	NBS_File::LONG tick;
 	NBS_File::BYTE instrument;
 	NBS_File::BYTE key;
+
+public:
+	void Print(std::string_view beg = "", std::string_view end = "\n") const
+	{
+		print("{}tick: [{:02}], instrument: [{:02}], key: [{:02}]{}", beg, instrument, key, end);
+	}
 };
 
 using MyNoteList = std::vector<MyNote>;
@@ -297,17 +304,6 @@ MyNoteSubList ToMyNoteSubList(const MyNoteList &listNote)
 //
 //	return groupNote;
 //}
-
-int main(int argc, char *argv[]) try
-{
-	MyAssert(argc == 2);
-	NBS_File nbs;
-	MyAssert(NBS_IO::ReadNBSFromFile(nbs, argv[1]));
-
-	//提取关键信息
-	auto noteList = ToMyNoteList(nbs);
-	nbs.~NBS_File();
-
 	////根据音符类型拆散
 	//auto groupNote = ToInstMap(noteList);
 	//noteList.~vector();
@@ -323,6 +319,24 @@ int main(int argc, char *argv[]) try
 	//	}
 	//}
 	//print("========================================\n");
+
+
+int main(int argc, char *argv[]) try
+{
+	MyAssert(argc == 2);
+	NBS_File nbs;
+	MyAssert(NBS_IO::ReadNBSFromFile(nbs, argv[1]));
+
+	//提取关键信息
+	auto noteList = ToMyNoteList(nbs);
+	nbs.~NBS_File();
+
+	for (auto &it : noteList)
+	{
+		it.Print();
+	}
+
+	print("\n==========================================\n\n");
 
 	//拆分为排序序列，同tick音符合并，跨tick音符转为静音tick
 	auto listNoteSub = ToMyNoteSubList(noteList);
