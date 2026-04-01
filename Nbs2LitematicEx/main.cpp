@@ -242,7 +242,7 @@ MyNoteSubList ToMyNoteSubList(const MyNoteList &listNote)
 		last_tick = curNote.tick;
 		if (deleta_tick != 0)
 		{
-			listNoteSub.emplace_back(deleta_tick - 1);
+			listNoteSub.emplace_back(deleta_tick - 1);//tick是绝对值的差值，-1获得中间空白长度
 		}
 
 		//插入音符
