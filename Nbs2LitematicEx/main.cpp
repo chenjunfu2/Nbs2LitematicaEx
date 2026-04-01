@@ -252,6 +252,28 @@ MyNoteSubList ToMyNoteSubList(const MyNoteList &listNote)
 	return listNoteSub;
 }
 
+struct NoteVal
+{
+	std::unordered_map<MyNoteSub, size_t> mapNoteIndex;
+	std::vector<MyNoteSub> listNoteSub;
+};
+
+NoteVal ToNoteVal(const MyNoteSubList &listNoteSub)
+{
+	NoteVal valNote;
+	for (const auto &it : listNoteSub)
+	{
+		auto [itEmplace, bSuccess] = valNote.mapNoteIndex.try_emplace(it, listNoteSub.size());//如果插入成功，那么size相当于index（因为下面插入）
+		if (bSuccess)
+		{
+			valNote.listNoteSub.push_back(it);
+		}
+		//如果插入失败，那么什么也不做，因为是重复元素，无需额外处理，丢弃即可
+	}
+
+	return valNote;
+}
+
 
 
 //using InstGroupNote = std::vector<MyNoteList>;
@@ -349,6 +371,10 @@ int main(int argc, char *argv[]) try
 	//后缀数组sa+LCP查找所有重复子串，使用贪心匹配最大不重叠子串集合，相似性匹配递归找变化子序列
 	//根据集合完成重复序列收集
 	//目前考虑算法先对完整组做一次，再对每个乐器分组做一次，最后分别输出
+
+	//首先，对每个音符、空白音符做唯一值ID映射，映射为一段连续的值域
+	//通过unordered map进行查重和下标映射，vector对应下标存储具体音符值
+	NoteVal valNote = ToNoteVal(listNoteSub);
 
 
 
