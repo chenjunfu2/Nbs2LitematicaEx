@@ -376,7 +376,7 @@ int main(int argc, char *argv[]) try
 	//通过unordered map进行查重和下标映射，vector对应下标存储具体音符值
 	NoteVal valNote = ToNoteVal(listNoteSub);
 
-
+	//后缀数组：https://oi-wiki.org/string/sa/
 
 
 
