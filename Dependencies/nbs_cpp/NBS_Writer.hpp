@@ -151,25 +151,27 @@ do\
 
 		//遍历tick
 		size_t noteIndex = 0;
-		NBS_File::LONG cur_tick = -1;
+		NBS_File::LONG last_tick = -1;
 		while (noteIndex < szSortedNoteSize)
 		{
 			//获取当前音符的tick
 			NBS_File::LONG tick = sortedNoteList[noteIndex].tick;
 
 			//写入tick相对偏移（SHORT）
-			NORM_WRITE((NBS_File::SHORT)(tick - cur_tick));
-			cur_tick = tick;
+			NBS_File::SHORT delta_tick = (NBS_File::SHORT)(tick - last_tick);
+			NORM_WRITE(delta_tick);
+			last_tick = tick;
 
 			//写入当前tick的所有音符作为一个layer层
-			NBS_File::SHORT cur_layer = -1;
+			NBS_File::SHORT last_layer = -1;
 			do
 			{
 				const auto &note = sortedNoteList[noteIndex];
 
 				//写入layer偏移
-				NORM_WRITE((NBS_File::SHORT)(note.layer - cur_layer));
-				cur_layer = note.layer;
+				NBS_File::SHORT delta_layer = (NBS_File::SHORT)(note.layer - last_layer);
+				NORM_WRITE(delta_layer);
+				last_layer = note.layer;
 
 				//写入音符数据
 				NORM_WRITE(note.instrument);

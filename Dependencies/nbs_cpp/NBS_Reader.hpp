@@ -144,24 +144,24 @@ do\
 		NBS_File::LONG cur_tick = -1;
 		while (true)
 		{
-			NBS_File::SHORT tick{};//读取使用相对偏移（SHORT）
-			NORM_READ(tick);
-			if (tick == 0)
+			NBS_File::SHORT delta_tick{};//读取使用相对偏移（SHORT）
+			NORM_READ(delta_tick);
+			if (delta_tick == 0)
 			{
 				break;
 			}
-			cur_tick += tick;
+			cur_tick += delta_tick;
 
 			NBS_File::SHORT cur_layer = -1;
 			while (true)
 			{
-				NBS_File::SHORT layer{};
-				NORM_READ(layer);
-				if (layer == 0)
+				NBS_File::SHORT delta_layer{};
+				NORM_READ(delta_layer);
+				if (delta_layer == 0)
 				{
 					break;
 				}
-				cur_layer += layer;
+				cur_layer += delta_layer;
 
 				NBS_File::Note note;
 				note.tick = cur_tick;

@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <ranges>
+#include <compare>
 
 #include <vector>
 #include <unordered_map>
@@ -23,6 +24,143 @@ void printerr(std::format_string<Args...> fmt, Args&&... args)
 {
 	std::string output = std::format(fmt, std::forward<Args>(args)...);
 	fwrite(output.data(), 1, output.size(), stderr);
+}
+
+struct MyNoteSub
+{
+public:
+	enum class Type : uint8_t
+	{
+		Note,
+		Blank,
+	};
+
+public:
+	const Type enType;
+	union
+	{
+		struct
+		{
+			const NBS_File::BYTE instrument;
+			const NBS_File::BYTE key;
+		};
+		struct
+		{
+			const NBS_File::SHORT tick;//delta tick
+		};
+	};
+
+public:
+	MyNoteSub(NBS_File::BYTE _instrument, NBS_File::BYTE _key) : enType(Type::Note), instrument(_instrument), key(_key)
+	{}
+
+	MyNoteSub(NBS_File::SHORT _tick) : enType(Type::Blank), tick(_tick)
+	{}
+	
+	~MyNoteSub(void) = default;
+public:
+	bool operator==(const MyNoteSub &_Right) const
+	{
+		switch (enType)
+		{
+		case MyNoteSub::Type::Note:
+			return instrument == _Right.instrument && key == _Right.key;
+			break;
+		case MyNoteSub::Type::Blank:
+			return tick == _Right.tick;
+			break;
+		default:
+			throw std::runtime_error("Switched Unknown Type!");
+			break;
+		}
+	}
+
+	bool operator!=(const MyNoteSub &_Right) const
+	{
+		switch (enType)
+		{
+		case MyNoteSub::Type::Note:
+			return instrument != _Right.instrument || key != _Right.key;
+			break;
+		case MyNoteSub::Type::Blank:
+			return tick != _Right.tick;
+			break;
+		default:
+			throw std::runtime_error("Switched Unknown Type!");
+			break;
+		}
+	}
+
+	std::strong_ordering operator<=>(const MyNoteSub &_Right) const
+	{
+		switch (enType)
+		{
+		case MyNoteSub::Type::Note:
+			if (auto tmp = instrument <=> _Right.instrument; tmp != 0)
+			{
+				return tmp;
+			}
+			else
+			{
+				return key <=> _Right.key;
+			}
+			break;
+		case MyNoteSub::Type::Blank:
+			return tick <=> _Right.tick;
+			break;
+		default:
+			throw std::runtime_error("Switched Unknown Type!");
+			break;
+		}
+	}
+
+	size_t Hash(void) const
+	{
+		switch (enType)
+		{
+		case MyNoteSub::Type::Note:
+			{
+				return std::hash<uint16_t>{}((uint16_t)instrument << 8 | (uint16_t)key << 0);
+			}
+			break;
+		case MyNoteSub::Type::Blank:
+			{
+				return std::hash<uint16_t>{}(tick);
+			}
+			break;
+		default:
+			throw std::runtime_error("Switched Unknown Type!");
+			break;
+		}
+	}
+
+	void Print(std::string_view beg = "", std::string_view end = "\n") const
+	{
+		switch (enType)
+		{
+		case MyNoteSub::Type::Note:
+			print("{}instrument: [{:02}], key: [{:02}]{}", beg, instrument, key, end);
+			break;
+		case MyNoteSub::Type::Blank:
+			print("{}Δtick: [{:02}]{}", beg, tick, end);
+			break;
+		default:
+			throw std::runtime_error("Switched Unknown Type!");
+			break;
+		}
+	}
+};
+
+namespace std
+{
+	template <>// 特化 hash
+	struct hash<MyNoteSub>
+	{
+		size_t operator()(const MyNoteSub &_Hash) const noexcept
+		{
+			return _Hash.Hash();
+		}
+	};
 }
 
 struct MyNote
@@ -56,25 +194,24 @@ MyNoteList ToMyNoteList(const NBS_File &fNBS)
 	return listMyNote;
 }
 
-using InstGroupNote = std::vector<MyNoteList>;
+using MyNoteSubList = std::vector<MyNoteSub>;
 
-InstGroupNote ToInstMap(MyNoteList &listNote)
+//转化为音符-空白的序列方便子串匹配
+MyNoteSubList ToMyNoteSubList(const MyNoteList &listNote)
 {
-	if (listNote.empty())
-	{
-		return {};
-	}
+	MyNoteList sortedListNote = listNote;
 
-	std::ranges::sort(listNote,
-		[](const MyNote &l, const MyNote &r) -> bool //升序排列，先按照组，然后按照tick，最后按照key
+	//排序所有音符（按照tick序-instrument序-key序）
+	std::ranges::sort(sortedListNote,
+		[](const MyNote &l, const MyNote &r) -> bool
 		{
-			if (l.instrument != r.instrument)
-			{
-				return l.instrument < r.instrument;
-			}
-			else if (l.tick != r.tick)
+			if (l.tick != r.tick)
 			{
 				return l.tick < r.tick;
+			}
+			else if (l.instrument != r.instrument)
+			{
+				return l.instrument < r.instrument;
 			}
 			else
 			{
@@ -82,30 +219,84 @@ InstGroupNote ToInstMap(MyNoteList &listNote)
 			}
 		}
 	);
+	size_t szSortedNoteSize = sortedListNote.size();
 
-	InstGroupNote groupNote;
-	NBS_File::BYTE bLastInstrument = listNote.front().instrument;
-	MyNoteList tempList;
-	for (auto &it : listNote)
+	//列表
+	MyNoteSubList listNoteSub;
+	listNoteSub.reserve(szSortedNoteSize);
+	//计算tick差值，作为空白音符
+	NBS_File::LONG last_tick = 0;
+	for (size_t noteIndex = 0; noteIndex < szSortedNoteSize; ++noteIndex)
 	{
-		if (bLastInstrument != it.instrument)
+		const auto &curNote = sortedListNote[noteIndex];
+
+		//插入空白，如果空白为0则跳过
+		NBS_File::SHORT deleta_tick = (NBS_File::SHORT)(curNote.tick - last_tick);
+		last_tick = curNote.tick;
+		if (deleta_tick != 0)
 		{
-			bLastInstrument = it.instrument;
-			groupNote.push_back(std::move(tempList));
-			tempList.clear();
+			listNoteSub.emplace_back(deleta_tick);
 		}
-		//不论如何都插入，如果遇到不等的情况，上面会进行清理
-		tempList.push_back(std::move(it));
+
+		//插入音符
+		listNoteSub.emplace_back(curNote.instrument, curNote.key);
 	}
 
-	//如果最后一个不为空，那么插入最终的值
-	if (!tempList.empty())
-	{
-		groupNote.push_back(std::move(tempList));
-	}
-
-	return groupNote;
+	return listNoteSub;
 }
+
+
+
+//using InstGroupNote = std::vector<MyNoteList>;
+//
+//InstGroupNote ToInstMap(MyNoteList &listNote)
+//{
+//	if (listNote.empty())
+//	{
+//		return {};
+//	}
+//
+//	std::ranges::sort(listNote,
+//		[](const MyNote &l, const MyNote &r) -> bool //升序排列，先按照组，然后按照tick，最后按照key
+//		{
+//			if (l.instrument != r.instrument)
+//			{
+//				return l.instrument < r.instrument;
+//			}
+//			else if (l.tick != r.tick)
+//			{
+//				return l.tick < r.tick;
+//			}
+//			else
+//			{
+//				return l.key < r.key;
+//			}
+//		}
+//	);
+//
+//	InstGroupNote groupNote;
+//	NBS_File::BYTE bLastInstrument = listNote.front().instrument;
+//	MyNoteList tempList;
+//	for (auto &it : listNote)
+//	{
+//		if (bLastInstrument != it.instrument)
+//		{
+//			bLastInstrument = it.instrument;
+//			groupNote.push_back(std::move(tempList));
+//			tempList.clear();
+//		}
+//		//不论如何都插入，如果遇到不等的情况，上面会进行清理
+//		tempList.push_back(std::move(it));
+//	}
+//
+//	//如果最后一个不为空，那么插入最终的值
+//	if (!tempList.empty())
+//	{
+//		groupNote.push_back(std::move(tempList));
+//	}
+//
+//	return groupNote;
+//}
 
 int main(int argc, char *argv[]) try
 {
@@ -117,22 +308,28 @@ int main(int argc, char *argv[]) try
 	auto noteList = ToMyNoteList(nbs);
 	nbs.~NBS_File();
 
-	//根据音符类型拆散
-	auto groupNote = ToInstMap(noteList);
-	noteList.~vector();
+	////根据音符类型拆散
+	//auto groupNote = ToInstMap(noteList);
+	//noteList.~vector();
+	//
+	////现在，map的每个音，后面跟着若干音符
+	////输出一下看看
+	//for (auto &it : groupNote)
+	//{
+	//	print("========================================\nInst: [{}], Count: [{}]\n", it.front().instrument, it.size());
+	//	for (auto &note : it)
+	//	{
+	//		print("\tTick: [{}], Key: [{}]\n", note.tick, note.key);
+	//	}
+	//}
+	//print("========================================\n");
 
-	//现在，map的每个音，后面跟着若干音符
-	//输出一下看看
-	for (auto &it : groupNote)
+	//拆分为排序序列，同tick音符合并，跨tick音符转为静音tick
+	auto listNoteSub = ToMyNoteSubList(noteList);
+	for (auto &it : listNoteSub)
 	{
-		print("========================================\nInst: [{}], Count: [{}]\n", it.front().instrument, it.size());
-		for (auto &note : it)
-		{
-			print("\tTick: [{}], Key: [{}]\n", note.tick, note.key);
-		}
+		it.Print();
 	}
-	print("========================================\n");
-
 
 
 	//后缀数组sa+LCP查找所有重复子串，使用贪心匹配最大不重叠子串集合
