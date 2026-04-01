@@ -242,7 +242,7 @@ MyNoteSubList ToMyNoteSubList(const MyNoteList &listNote)
 		last_tick = curNote.tick;
 		if (deleta_tick != 0)
 		{
-			listNoteSub.emplace_back(deleta_tick);
+			listNoteSub.emplace_back(deleta_tick - 1);
 		}
 
 		//插入音符
