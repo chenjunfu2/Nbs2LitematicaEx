@@ -173,7 +173,7 @@ public:
 public:
 	void Print(std::string_view beg = "", std::string_view end = "\n") const
 	{
-		print("{}tick: [{:02}], instrument: [{:02}], key: [{:02}]{}", beg, instrument, key, end);
+		print("{}tick: [{:02}], instrument: [{:02}], key: [{:02}]{}", beg, tick, instrument, key, end);
 	}
 };
 
