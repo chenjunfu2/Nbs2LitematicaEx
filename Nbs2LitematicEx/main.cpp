@@ -254,23 +254,27 @@ MyNoteSubList ToMyNoteSubList(const MyNoteList &listNote)
 
 struct NoteVal
 {
-	std::unordered_map<MyNoteSub, size_t> mapNoteIndex;
-	std::vector<MyNoteSub> listNoteSub;
+	std::vector<MyNoteSub> listNoteSubMap;
+	std::vector<size_t> listEncodeNoteSub;
 };
 
 NoteVal ToNoteVal(const MyNoteSubList &listNoteSub)
 {
 	NoteVal valNote;
+	std::unordered_map<MyNoteSub, size_t> mapNoteSubIndex;
 	for (const auto &it : listNoteSub)
 	{
-		auto [itEmplace, bSuccess] = valNote.mapNoteIndex.try_emplace(it, listNoteSub.size());//如果插入成功，那么size相当于index（因为下面插入）
+		auto [itEmplace, bSuccess] = mapNoteSubIndex.try_emplace(it, valNote.listNoteSubMap.size());//如果插入成功，那么size相当于index（因为下面插入）
 		if (bSuccess)
 		{
-			valNote.listNoteSub.push_back(it);
+			valNote.listNoteSubMap.push_back(it);
 		}
-		//如果插入失败，那么什么也不做，因为是重复元素，无需额外处理，丢弃即可
+
+		//如果插入失败，那么itEmplace获得的是阻止插入的元素，相当于查找到它的映射，否则是刚才插入的元素
+		valNote.listEncodeNoteSub.push_back(itEmplace->second);//插入编码数组中，这样编码数组利用size值替代了listNoteSub
 	}
 
+	//map用完即弃
 	return valNote;
 }
 
@@ -342,6 +346,132 @@ NoteVal ToNoteVal(const MyNoteSubList &listNoteSub)
 	//}
 	//print("========================================\n");
 
+using SuffixArray = std::vector<size_t>;
+
+SuffixArray DoublingCountingRadixSortSuffixArray(const NoteVal &valNote)
+{
+	size_t szCountMax = valNote.listNoteSubMap.size() + 1;
+	size_t szInputLength = valNote.listEncodeNoteSub.size() + 1;
+
+	size_t szArraySize = sizeof(size_t) * szInputLength;
+	size_t szCountSize = sizeof(size_t) * szCountMax;
+	uint8_t *pBase = new uint8_t[szCountSize + szArraySize * (4 + 2)];
+
+	size_t *pCount =		(size_t *)&pBase[0];
+
+	size_t szBegIndex = 0;
+	size_t *pRank =			(size_t *)&pBase[szCountSize + szArraySize * szBegIndex]; szBegIndex += 2;
+	size_t *pLastRank =		(size_t *)&pBase[szCountSize + szArraySize * szBegIndex]; szBegIndex += 2;
+	size_t *pSufArr =		(size_t *)&pBase[szCountSize + szArraySize * szBegIndex]; szBegIndex += 1;
+	size_t *pLastSufArr =	(size_t *)&pBase[szCountSize + szArraySize * szBegIndex]; szBegIndex += 1;
+
+	memset(pCount, 0, szCountSize);
+
+	memset(pRank, 0, szArraySize * 2);//后半额外填充
+	memset(pLastRank, 0, szArraySize * 2);//后半额外填充
+	memset(pSufArr, 0, szArraySize);
+	memset(pLastSufArr, 0, szArraySize);
+
+	//计算出现次数
+	for (size_t i = 1; i <= szInputLength - 1; ++i)
+	{
+		++pCount[pRank[i] = valNote.listEncodeNoteSub[i - 1] + 1];
+	}
+	//前缀和获取值最后下标
+	for (size_t i = 1; i <= szCountMax; ++i)
+	{
+		pCount[i] += pCount[i - 1];
+	}
+	//1格排序
+	for (size_t i = szInputLength; i >= 1; --i)
+	{
+		pSufArr[pCount[pRank[i]]--] = i;
+	}
+
+	memcpy(pLastRank, pRank, szArraySize);
+	for (size_t i = 1, p = 0; i <= szInputLength; ++i)
+	{
+		if (pLastRank[pSufArr[i]] == pLastRank[pSufArr[i - 1]])
+		{
+			pRank[pSufArr[i]] = p;
+		}
+		else
+		{
+			pRank[pSufArr[i]] = ++p;
+		}
+	}
+
+
+	for (size_t w = 1; w < szInputLength; w *= 2)
+	{
+		memset(pCount, 0, szCountSize);
+		memcpy(pLastSufArr, pSufArr, szArraySize);
+
+		//计算出现次数
+		for (size_t i = 0; i <= szInputLength; ++i)
+		{
+			++pCount[pRank[pLastSufArr[i] + w]];
+		}
+		//前缀和获取值最后下标
+		for (size_t i = 1; i <= szCountMax; ++i)
+		{
+			pCount[i] += pCount[i - 1];
+		}
+		//排序
+		for (size_t i = szInputLength; i >= 1; --i)
+		{
+			pSufArr[pCount[pRank[pLastSufArr[i] + w]]--] = pLastSufArr[i];
+		}
+
+		memset(pCount, 0, szCountSize);
+		memcpy(pLastSufArr, pSufArr, szArraySize);
+
+		//计算出现次数
+		for (size_t i = 1; i <= szInputLength; ++i)
+		{
+			++pCount[pRank[pLastSufArr[i]]];
+		}
+		//前缀和获取值最后下标
+		for (size_t i = 1; i <= szCountMax; ++i)
+		{
+			pCount[i] += pCount[i - 1];
+		}
+		//排序
+		for (size_t i = szInputLength; i >= 1; --i)
+		{
+			pSufArr[pCount[pRank[pLastSufArr[i]]]--] = pLastSufArr[i];
+		}
+
+		memcpy(pLastRank, pRank, szArraySize);
+		for (size_t i = 1, p = 0; i <= szInputLength; ++i)
+		{
+			if (pLastRank[pSufArr[i]] == pLastRank[pSufArr[i - 1]] &&
+				pLastRank[pSufArr[i] + w] == pLastRank[pSufArr[i - 1] + w])
+			{
+				pRank[pSufArr[i]] = p;
+			}
+			else
+			{
+				pRank[pSufArr[i]] = ++p;
+			}
+		}
+	}
+
+	SuffixArray ret;
+	ret.reserve(szInputLength);
+	for (size_t i = 1; i <= szInputLength; ++i)
+	{
+		ret.push_back(pSufArr[i] - 1);
+	}
+
+	delete[] pBase;
+	pBase = nullptr;
+
+	return ret;
+}
+
+
+
 
 int main(int argc, char *argv[]) try
 {
@@ -377,6 +507,17 @@ int main(int argc, char *argv[]) try
 	NoteVal valNote = ToNoteVal(listNoteSub);
 
 	//后缀数组：https://oi-wiki.org/string/sa/
+	//SA-IS：https://www.luogu.com.cn/article/eugf8e8y
+
+	//先实现基础版本，后续再考虑是否优化SA-IS
+
+	//在这里，NoteVal存储离散化的双向映射
+	//从0~valNote.listNoteSubMap.size()即为值域大小
+	//根据值域选择使用的算法（较小使用基数计数排序，较大使用普通排序）
+
+	auto sa = DoublingCountingRadixSortSuffixArray(valNote);
+
+
 
 
 
