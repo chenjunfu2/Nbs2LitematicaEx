@@ -689,7 +689,7 @@ int main(int argc, char *argv[]) try
 		print("\n");
 
 		// 输出实际内容（解码）
-		print("实际内容: ");
+		print("notes: ");
 		for (size_t j = sub.start; j < sub.start + sub.length; ++j)
 		{
 			size_t encodeVal = valNote.listEncodeNoteSub[j];
