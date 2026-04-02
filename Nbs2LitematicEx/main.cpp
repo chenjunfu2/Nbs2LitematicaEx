@@ -680,23 +680,22 @@ int main(int argc, char *argv[]) try
 	// 输出结果（解码后的实际内容）
 	for (const auto &sub : listRepeatSubNote)
 	{
-		print("sub length: {}\n", sub.length);
-		print("pos: ");
+		print("------------------------------------------\nsub length: [{}]\npos: ", sub.length);
 		for (size_t pos : sub.occurrences)
 		{
-			print("{} ", pos);
+			print("[{}],", pos);
 		}
 		print("\n");
 
 		// 输出实际内容（解码）
-		print("notes: ");
+		print("notes:\n");
 		for (size_t j = sub.start; j < sub.start + sub.length; ++j)
 		{
 			size_t encodeVal = valNote.listEncodeNoteSub[j];
 			const auto &note = valNote.listNoteSubMap[encodeVal];
 			note.Print();
 		}
-		print("\n\n");
+		print("------------------------------------------\n\n");
 	}
 
 	return 0;
