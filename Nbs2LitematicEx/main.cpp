@@ -350,22 +350,20 @@ using SuffixArray = std::vector<size_t>;
 
 SuffixArray DoublingCountingRadixSortSuffixArray(const NoteVal &valNote)
 {
-	size_t szCountMax = valNote.listNoteSubMap.size() + 1;
-	size_t szInputLength = valNote.listEncodeNoteSub.size() + 1;
+	size_t szInputMaxVal = valNote.listNoteSubMap.size() + 1;
+	size_t szArrayLength = valNote.listEncodeNoteSub.size();
 
-	size_t szArraySize = sizeof(size_t) * szInputLength;
-	size_t szCountSize = sizeof(size_t) * szCountMax;
-	uint8_t *pBase = new uint8_t[szCountSize + szArraySize * (4 + 2)];
-
-	size_t *pCount =		(size_t *)&pBase[0];
+	size_t szArraySize = sizeof(size_t) * (szArrayLength + 1);//从1~length，所以多分配一个
+	uint8_t *pBase = new uint8_t[szArraySize * (5 + 2)];
 
 	size_t szBegIndex = 0;
-	size_t *pRank =			(size_t *)&pBase[szCountSize + szArraySize * szBegIndex]; szBegIndex += 2;
-	size_t *pLastRank =		(size_t *)&pBase[szCountSize + szArraySize * szBegIndex]; szBegIndex += 2;
-	size_t *pSufArr =		(size_t *)&pBase[szCountSize + szArraySize * szBegIndex]; szBegIndex += 1;
-	size_t *pLastSufArr =	(size_t *)&pBase[szCountSize + szArraySize * szBegIndex]; szBegIndex += 1;
+	size_t *pCount =		(size_t *)&pBase[szArraySize * szBegIndex]; szBegIndex += 1;
+	size_t *pRank =			(size_t *)&pBase[szArraySize * szBegIndex]; szBegIndex += 2;
+	size_t *pLastRank =		(size_t *)&pBase[szArraySize * szBegIndex]; szBegIndex += 2;
+	size_t *pSufArr =		(size_t *)&pBase[szArraySize * szBegIndex]; szBegIndex += 1;
+	size_t *pLastSufArr =	(size_t *)&pBase[szArraySize * szBegIndex]; szBegIndex += 1;
 
-	memset(pCount, 0, szCountSize);
+	memset(pCount, 0, szArraySize);
 
 	memset(pRank, 0, szArraySize * 2);//后半额外填充
 	memset(pLastRank, 0, szArraySize * 2);//后半额外填充
@@ -373,23 +371,23 @@ SuffixArray DoublingCountingRadixSortSuffixArray(const NoteVal &valNote)
 	memset(pLastSufArr, 0, szArraySize);
 
 	//计算出现次数
-	for (size_t i = 1; i <= szInputLength - 1; ++i)
+	for (size_t i = 1; i <= szArrayLength; ++i)
 	{
 		++pCount[pRank[i] = valNote.listEncodeNoteSub[i - 1] + 1];
 	}
 	//前缀和获取值最后下标
-	for (size_t i = 1; i <= szCountMax; ++i)
+	for (size_t i = 1; i <= szInputMaxVal; ++i)//仅第一次排序使用输入值域
 	{
 		pCount[i] += pCount[i - 1];
 	}
 	//1格排序
-	for (size_t i = szInputLength; i >= 1; --i)
+	for (size_t i = szArrayLength; i >= 1; --i)
 	{
 		pSufArr[pCount[pRank[i]]--] = i;
 	}
 
 	memcpy(pLastRank, pRank, szArraySize);
-	for (size_t i = 1, p = 0; i <= szInputLength; ++i)
+	for (size_t i = 1, p = 0; i <= szArrayLength; ++i)
 	{
 		if (pLastRank[pSufArr[i]] == pLastRank[pSufArr[i - 1]])
 		{
@@ -402,48 +400,48 @@ SuffixArray DoublingCountingRadixSortSuffixArray(const NoteVal &valNote)
 	}
 
 
-	for (size_t w = 1; w < szInputLength; w *= 2)
+	for (size_t w = 1; w < szArrayLength; w *= 2)
 	{
-		memset(pCount, 0, szCountSize);
+		memset(pCount, 0, szArraySize);
 		memcpy(pLastSufArr, pSufArr, szArraySize);
 
 		//计算出现次数
-		for (size_t i = 0; i <= szInputLength; ++i)
+		for (size_t i = 0; i <= szArrayLength; ++i)
 		{
 			++pCount[pRank[pLastSufArr[i] + w]];
 		}
 		//前缀和获取值最后下标
-		for (size_t i = 1; i <= szCountMax; ++i)
+		for (size_t i = 1; i <= szArrayLength; ++i)
 		{
 			pCount[i] += pCount[i - 1];
 		}
 		//排序
-		for (size_t i = szInputLength; i >= 1; --i)
+		for (size_t i = szArrayLength; i >= 1; --i)
 		{
 			pSufArr[pCount[pRank[pLastSufArr[i] + w]]--] = pLastSufArr[i];
 		}
 
-		memset(pCount, 0, szCountSize);
+		memset(pCount, 0, szArraySize);
 		memcpy(pLastSufArr, pSufArr, szArraySize);
 
 		//计算出现次数
-		for (size_t i = 1; i <= szInputLength; ++i)
+		for (size_t i = 1; i <= szArrayLength; ++i)
 		{
 			++pCount[pRank[pLastSufArr[i]]];
 		}
 		//前缀和获取值最后下标
-		for (size_t i = 1; i <= szCountMax; ++i)
+		for (size_t i = 1; i <= szArrayLength; ++i)
 		{
 			pCount[i] += pCount[i - 1];
 		}
 		//排序
-		for (size_t i = szInputLength; i >= 1; --i)
+		for (size_t i = szArrayLength; i >= 1; --i)
 		{
 			pSufArr[pCount[pRank[pLastSufArr[i]]]--] = pLastSufArr[i];
 		}
 
 		memcpy(pLastRank, pRank, szArraySize);
-		for (size_t i = 1, p = 0; i <= szInputLength; ++i)
+		for (size_t i = 1, p = 0; i <= szArrayLength; ++i)
 		{
 			if (pLastRank[pSufArr[i]] == pLastRank[pSufArr[i - 1]] &&
 				pLastRank[pSufArr[i] + w] == pLastRank[pSufArr[i - 1] + w])
@@ -458,8 +456,8 @@ SuffixArray DoublingCountingRadixSortSuffixArray(const NoteVal &valNote)
 	}
 
 	SuffixArray ret;
-	ret.reserve(szInputLength);
-	for (size_t i = 1; i <= szInputLength; ++i)
+	ret.reserve(szArrayLength);
+	for (size_t i = 1; i <= szArrayLength; ++i)
 	{
 		ret.push_back(pSufArr[i] - 1);
 	}
