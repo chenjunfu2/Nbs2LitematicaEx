@@ -346,9 +346,19 @@ NoteVal ToNoteVal(const MyNoteSubList &listNoteSub)
 	//}
 	//print("========================================\n");
 
-using SuffixArray = std::vector<size_t>;
+struct SAHI
+{
+public:
+	using SuffixArray = std::vector<size_t>;
+	using HeightArray = std::vector<size_t>;
 
-SuffixArray DoublingCountingRadixSortSuffixArray(const NoteVal &valNote)
+public:
+	SuffixArray SuffArr;
+	HeightArray HighArr;
+};
+
+
+SAHI DoublingCountingRadixSortSuffixArray(const NoteVal &valNote)
 {
 	size_t szCountMaxVal = valNote.listNoteSubMap.size() + 1;
 	size_t szArrayLength = valNote.listEncodeNoteSub.size();
@@ -448,20 +458,176 @@ SuffixArray DoublingCountingRadixSortSuffixArray(const NoteVal &valNote)
 		szDoublingStep *= 2;//倍增
 	}
 
-	SuffixArray ret;
-	ret.reserve(szArrayLength);
+	//准备返回
+	SAHI ret;
+
+	ret.SuffArr.reserve(szArrayLength);
 	for (size_t i = 1; i <= szArrayLength; ++i)
 	{
-		ret.push_back(pSufArr[i] - 1);
+		ret.SuffArr.push_back(pSufArr[i] - 1);
 	}
 
+	ret.HighArr.resize(szArrayLength);
+	for (size_t i = 1, k = 0; i <= szArrayLength; ++i)
+	{
+		if (pRank[i] == 0)
+		{
+			continue;
+		}
+
+		if (k != 0)
+		{
+			--k;
+		}
+
+
+		auto j = pSufArr[pRank[i] - 1];
+		while (j + k != 0 && i + k != 0 &&
+			i - 1 + k < valNote.listEncodeNoteSub.size() && j - 1 + k < valNote.listEncodeNoteSub.size() &&
+			valNote.listEncodeNoteSub[i - 1 + k] == valNote.listEncodeNoteSub[j - 1 + k])
+		{
+			++k;
+		}
+
+		ret.HighArr[pRank[i] - 1] = k;
+	}
+
+	//释放
 	delete[] pBase;
 	pBase = nullptr;
 
 	return ret;
 }
 
+struct RepeatSubNote
+{
+	size_t start;      // 在原串中的起始位置（0-based）
+	size_t length;     // 子串长度
+	std::vector<size_t> occurrences;  // 所有出现位置（0-based）
+};
 
+using RepeatSubNoteList = std::vector<RepeatSubNote>;
+
+class RepeatSubNoteFinder
+{
+public:
+	static RepeatSubNoteList FindAll(const NoteVal &valNote, const SAHI &sahi)
+	{
+		size_t n = valNote.listEncodeNoteSub.size();
+		const auto &encode = valNote.listEncodeNoteSub;  // 编码数组，作为"字符串"使用
+
+		std::vector<RepeatSubNote> result;
+		std::vector<bool> covered(n, false);
+
+		// 使用并查集优化覆盖检查
+		std::vector<size_t> next_free(n + 1);
+		for (size_t i = 0; i <= n; ++i) next_free[i] = i;
+
+		// 按长度从大到小处理
+		for (int len = n / 2; len >= 1; --len)
+		{
+			size_t i = 1;
+
+			while (i < n)
+			{
+				if (sahi.HighArr[i] < len)
+				{
+					++i;
+					continue;
+				}
+
+				// 收集连续区间（这些后缀至少有 len 的公共前缀）
+				std::vector<size_t> positions;
+				positions.push_back(sahi.SuffArr[i - 1]);
+
+				while (i < n && sahi.HighArr[i] >= len)
+				{
+					positions.push_back(sahi.SuffArr[i]);
+					++i;
+				}
+
+				// 排序并去重
+				std::sort(positions.begin(), positions.end());
+				positions.erase(std::unique(positions.begin(), positions.end()),
+					positions.end());
+
+				// 贪心选择不重叠的位置
+				std::vector<size_t> selected;
+				size_t last_end = 0;
+
+				for (size_t pos : positions)
+				{
+					// 找到下一个未被覆盖的位置
+					size_t actual_pos = findNextFree(pos, next_free, n);
+					if (actual_pos >= n) continue;
+
+					// 检查是否能放下整个子串
+					if (actual_pos + len <= n)
+					{
+						// 检查这个区间是否完全未被覆盖
+						bool valid = true;
+						for (size_t j = actual_pos; j < actual_pos + len; ++j)
+						{
+							if (covered[j])
+							{
+								valid = false;
+								break;
+							}
+						}
+
+						if (valid && (selected.empty() || actual_pos >= last_end))
+						{
+							selected.push_back(actual_pos);
+							last_end = actual_pos + len;
+						}
+					}
+				}
+
+				// 记录结果
+				if (selected.size() >= 2)
+				{
+					RepeatSubNote sub;
+					sub.start = selected[0];
+					sub.length = len;
+					sub.occurrences = selected;
+					result.push_back(sub);
+
+					// 标记覆盖
+					for (size_t pos : selected)
+					{
+						for (size_t j = pos; j < pos + len; ++j)
+						{
+							covered[j] = true;
+							next_free[j] = j + len;
+						}
+					}
+					rebuildNextFree(next_free, n);
+				}
+			}
+		}
+
+		return result;
+	}
+
+private:
+	static size_t findNextFree(size_t pos, const std::vector<size_t> &next_free, size_t n)
+	{
+		if (pos >= n) return n;
+		if (next_free[pos] == pos) return pos;
+		return findNextFree(next_free[pos], next_free, n);
+	}
+
+	static void rebuildNextFree(std::vector<size_t> &next_free, size_t n)
+	{
+		for (size_t i = n; i > 0; --i)
+		{
+			if (next_free[i - 1] != i - 1)
+			{
+				next_free[i - 1] = findNextFree(next_free[i - 1], next_free, n);
+			}
+		}
+	}
+};
 
 
 int main(int argc, char *argv[]) try
@@ -488,6 +654,7 @@ int main(int argc, char *argv[]) try
 		it.Print();
 	}
 
+	print("\n==========================================\n\n");
 
 	//后缀数组sa+LCP查找所有重复子串，使用贪心匹配最大不重叠子串集合，相似性匹配递归找变化子序列
 	//根据集合完成重复序列收集
@@ -506,13 +673,31 @@ int main(int argc, char *argv[]) try
 	//从0~valNote.listNoteSubMap.size()即为值域大小
 	//根据值域选择使用的算法（较小使用基数计数排序，较大使用普通排序）
 
-	auto SufArr = DoublingCountingRadixSortSuffixArray(valNote);
+	auto sahi = DoublingCountingRadixSortSuffixArray(valNote);
 
+	auto listRepeatSubNote = RepeatSubNoteFinder::FindAll(valNote, sahi);
 
+	// 输出结果（解码后的实际内容）
+	for (const auto &sub : listRepeatSubNote)
+	{
+		print("sub length: {}\n", sub.length);
+		print("pos: ");
+		for (size_t pos : sub.occurrences)
+		{
+			print("{} ", pos);
+		}
+		print("\n");
 
-
-
-
+		// 输出实际内容（解码）
+		print("实际内容: ");
+		for (size_t j = sub.start; j < sub.start + sub.length; ++j)
+		{
+			size_t encodeVal = valNote.listEncodeNoteSub[j];
+			const auto &note = valNote.listNoteSubMap[encodeVal];
+			note.Print();
+		}
+		print("\n\n");
+	}
 
 	return 0;
 }
