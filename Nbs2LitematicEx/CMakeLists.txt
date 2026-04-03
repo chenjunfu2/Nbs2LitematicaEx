@@ -5,6 +5,8 @@ add_executable(Nbs2LitematicEx
     main.cpp
 )
 
+set_release_static_link(Nbs2LitematicEx)
+
 target_link_libraries(Nbs2LitematicEx
     PUBLIC
         ${COMMON_LIBS}
