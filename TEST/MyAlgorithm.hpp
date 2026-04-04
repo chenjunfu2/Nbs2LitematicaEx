@@ -32,6 +32,7 @@ void PrintArr(const char *pArrName, size_t *pArr, size_t szArrLength)
 template<typename T>
 using ValueList = std::vector<T>;
 
+//返回值为排序在vSortArr中的下标，所以是size_t
 template<typename T>
 requires(std::is_integral_v<T> &&std::is_unsigned_v<T>)
 ValueList<size_t> DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, const ValueList<T> &vSortArr)//szArrValueRange是上边界，无法取到
@@ -42,10 +43,11 @@ ValueList<size_t> DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, c
 		return {};
 	}
 
+	//计算长度
 	size_t szArrayLength = vSortArr.size();//计算后缀、排名数组长度
 	size_t szCountLength = szArrValueRange > szArrayLength ? szArrValueRange : szArrayLength;//计算排序数组长度（值域或数组长度较大的那个）
 
-	//计算它们的大小
+	//计算大小
 	size_t szArraySize = sizeof(size_t) * szArrayLength;
 	size_t szCountSize = sizeof(size_t) * szCountLength;
 
@@ -54,18 +56,18 @@ ValueList<size_t> DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, c
 	uint8_t *pMove = pBase;
 
 	//裁切内存，依次分配
-	size_t *pCount = (size_t *)pMove; pMove += szCountSize;
-	size_t *pRank = (size_t *)pMove; pMove += szArraySize * 1;
-	size_t *pLastRank = (size_t *)pMove; pMove += szArraySize * 1;
-	size_t *pSufArr = (size_t *)pMove; pMove += szArraySize * 1;
-	size_t *pNextSufArr = (size_t *)pMove; pMove += szArraySize * 1;
+	size_t *pCount =		(size_t *)pMove; pMove += szCountSize;
+	size_t *pRank =			(size_t *)pMove; pMove += szArraySize * 1;
+	size_t *pLastRank =		(size_t *)pMove; pMove += szArraySize * 1;
+	size_t *pSufArr =		(size_t *)pMove; pMove += szArraySize * 1;
+	size_t *pNextSufArr =	(size_t *)pMove; pMove += szArraySize * 1;
 
 	//填0初始化
-	memset(pCount, 0, szCountSize);
-	memset(pRank, 0, szArraySize);
-	memset(pLastRank, 0, szArraySize);
-	memset(pSufArr, 0, szArraySize);
-	memset(pNextSufArr, 0, szArraySize);
+	memset(pCount,		0, szCountSize);
+	memset(pRank,		0, szArraySize);
+	memset(pLastRank,	0, szArraySize);
+	memset(pSufArr,		0, szArraySize);
+	memset(pNextSufArr,	0, szArraySize);
 
 	PRINT_INF("begin\n");
 
@@ -219,6 +221,7 @@ ValueList<size_t> DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, c
 
 	PRINT_INF("end\n");
 
+	//准备返回值
 	ValueList listValue;
 	listValue.resize(szArrayLength);
 	memcpy(&listValue[0], pSufArr, szArraySize);
