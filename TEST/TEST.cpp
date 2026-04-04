@@ -29,7 +29,8 @@ void PrintArr(const char *pArrName, size_t *pArr, size_t szArrLength)
 #define PRINT_INF(fmt, ...)
 #endif
 
-void DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, std::vector<size_t> vSortArr)
+using ValueList = std::vector<size_t>;
+ValueList DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, const ValueList &vSortArr)
 {
 	if (vSortArr.empty() || szArrValueRange == 0)
 	{
@@ -213,14 +214,15 @@ void DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, std::vector<si
 
 	PRINT_INF("end\n");
 
-	for (size_t i = 0; i < szArrayLength; ++i)
-	{
-		printf("%zu ", pSufArr[i]);
-	}
+	ValueList listValue;
+	listValue.resize(szArrayLength);
+	memcpy(&listValue[0], pSufArr, szArraySize);
 
 	//释放
 	delete[] pBase;
 	pBase = nullptr;
+
+	return listValue;
 }
 
 int main(void)
@@ -233,7 +235,13 @@ int main(void)
 		strInput.push_back((size_t)c);
 	}
 
-	DoublingCountingRadixSortSuffixArray(INT8_MAX, strInput);
+	auto ret = DoublingCountingRadixSortSuffixArray(INT8_MAX, strInput);
+
+	for (auto &it : ret)
+	{
+		printf("%zu ", it);
+	}
+
 	putchar('\n');
 	return 0;
 }
