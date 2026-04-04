@@ -5,6 +5,30 @@
 #include <algorithm>
 #include <vector>
 
+
+void PrintArr(const char *pArrName, size_t *pArr, size_t szArrLength)
+{
+	printf("%s[%zu]: {", pArrName, szArrLength);
+	for (auto *p = pArr, *pEnd = pArr + szArrLength; p != pEnd; ++p)
+	{
+		printf("%zu, ", *p);
+	}
+	if (szArrLength != 0)
+	{
+		printf("\b\b");
+	}
+
+	printf("}\n");
+}
+
+#ifdef _DEBUG
+#define PRINT_ARR(arr, len) PrintArr(#arr, arr, len)
+#define PRINT_INF(fmt, ...) printf(fmt __VA_OPT__(,) __VA_ARGS__)
+#else
+#define PRINT_ARR(arr, len)
+#define PRINT_INF(fmt, ...)
+#endif
+
 void DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, std::vector<size_t> vSortArr)
 {
 	if (vSortArr.empty() || szArrValueRange == 0)
@@ -37,6 +61,8 @@ void DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, std::vector<si
 	memset(pSufArr, 0, szArraySize);
 	memset(pNextSufArr, 0, szArraySize);
 
+	PRINT_INF("begin\n");
+
 	//使得排名数组作为输入数组的拷贝
 	memcpy(&pRank[0], &vSortArr[0], szArraySize);
 
@@ -59,6 +85,9 @@ void DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, std::vector<si
 		//移动到前面（把计数值转化为索引），修改原始值，这样下一次遇到相同的值则放在前面
 		pSufArr[--szCurLastRank] = szStartIndex;//根据前缀和，获得当前szStartIndex位置值最后一个排名位置szCurLastRank，设置最后一个排名位置szCurLastRank的开始下标为zStartIndex
 	}
+	
+	PRINT_ARR(pRank, szArrayLength);
+	PRINT_ARR(pSufArr, szArrayLength);
 
 	/*
 	备注：
@@ -75,13 +104,15 @@ void DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, std::vector<si
 	//进行倍增
 	for (size_t szDoublingStep = 1; true; szDoublingStep *= 2)
 	{
+		PRINT_INF("for[%zu]\n", szDoublingStep);
+
 		//第二关键字排序
 		size_t szNewRank = 0;
 
 		//先把倍增的溢出部分放到最前面，因为溢出值全为0，那么只能排第一
-		for (size_t szRank = szArrayLength - szDoublingStep; szRank < szArrayLength; szRank++)
+		for (size_t szStartIndex = szArrayLength - szDoublingStep; szStartIndex < szArrayLength; szStartIndex++)
 		{
-			pNextSufArr[szNewRank++] = szRank;
+			pNextSufArr[szNewRank++] = szStartIndex;
 		}
 
 		for (size_t szRank = 0; szRank < szArrayLength; szRank++)
@@ -92,6 +123,8 @@ void DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, std::vector<si
 				pNextSufArr[szNewRank++] = szStartIndex - szDoublingStep;//按照排名顺序，放入它的倍增配对位置的前面
 			}
 		}
+
+		PRINT_ARR(pNextSufArr, szArrayLength);
 
 		//每次计算并仅填充需要的部分（szCountLength会变化）
 		memset(pCount, 0, sizeof(size_t) * szCountLength);
@@ -116,6 +149,9 @@ void DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, std::vector<si
 			//移动到前面（把计数值转化为索引），修改原始值，这样下一次遇到相同的值则放在前面
 			pSufArr[--szCurLastRank] = pNextSufArr[szReverseRank];//设置原先的排名位置为新的排序好的起始位置
 		}
+
+		PRINT_ARR(pSufArr, szArrayLength);
+		PRINT_ARR(pRank, szArrayLength);
 
 		//拷贝之前的排名
 		memcpy(pLastRank, pRank, szArraySize);
@@ -163,6 +199,8 @@ void DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, std::vector<si
 			szLastSecondRank = szCurrentSecondRank;
 		}
 
+		PRINT_ARR(pRank, szArrayLength);
+
 		//如果当前排名已经和输入数组大小相同，那么无需再次计算，直接结束
 		if ((szCurRank + 1) == szArrayLength)
 		{
@@ -172,6 +210,8 @@ void DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, std::vector<si
 		//裁剪前缀和计算范围为当前（最后一个）排名+1
 		szCountLength = szCurRank + 1;
 	}
+
+	PRINT_INF("end\n");
 
 	for (size_t i = 0; i < szArrayLength; ++i)
 	{
