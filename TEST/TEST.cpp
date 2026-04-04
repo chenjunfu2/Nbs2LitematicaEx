@@ -8,7 +8,7 @@
 
 void PrintArr(const char *pArrName, size_t *pArr, size_t szArrLength)
 {
-	printf("%s[%zu]: {", pArrName, szArrLength);
+	printf("[%s](%zu): {", pArrName, szArrLength);
 	for (auto *p = pArr, *pEnd = pArr + szArrLength; p != pEnd; ++p)
 	{
 		printf("%zu, ", *p);
@@ -30,11 +30,11 @@ void PrintArr(const char *pArrName, size_t *pArr, size_t szArrLength)
 #endif
 
 using ValueList = std::vector<size_t>;
-ValueList DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, const ValueList &vSortArr)
+ValueList DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, const ValueList &vSortArr)//szArrValueRange是上边界，无法取到
 {
 	if (vSortArr.empty() || szArrValueRange == 0)
 	{
-		return;
+		return {};
 	}
 
 	size_t szArrayLength = vSortArr.size();//计算后缀、排名数组长度
