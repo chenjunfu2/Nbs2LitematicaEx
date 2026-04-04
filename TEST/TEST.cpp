@@ -3,12 +3,12 @@
 
 int main(void)
 {
-	std::vector<size_t> strInput;
+	std::vector<uint8_t> strInput;
 	strInput.reserve(1000010);
 	int c;
 	while ((c = getchar()) != EOF && c != '\n')
 	{
-		strInput.push_back((size_t)c);
+		strInput.push_back(c);
 	}
 
 	auto ret = DoublingCountingRadixSortSuffixArray(INT8_MAX, strInput);

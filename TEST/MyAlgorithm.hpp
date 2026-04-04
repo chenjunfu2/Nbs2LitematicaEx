@@ -34,7 +34,7 @@ using ValueList = std::vector<T>;
 
 template<typename T>
 requires(std::is_integral_v<T> &&std::is_unsigned_v<T>)
-ValueList<T> DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, const ValueList<T> &vSortArr)//szArrValueRange是上边界，无法取到
+ValueList<size_t> DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, const ValueList<T> &vSortArr)//szArrValueRange是上边界，无法取到
 {
 	//拒绝空值
 	if (vSortArr.empty() || szArrValueRange == 0)
