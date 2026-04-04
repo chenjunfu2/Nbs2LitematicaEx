@@ -42,8 +42,8 @@ void DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, std::vector<si
 
 	for (size_t szStartIndex = 0; szStartIndex < szArrayLength; ++szStartIndex)
 	{
-		size_t &curValue = pRank[szStartIndex];//这里把原始值当作起始位置的排名，把排名（原始值）进行排序统计
-		++pCount[curValue];//排序统计出现次数
+		size_t &szCurValue = pRank[szStartIndex];//这里把原始值当作起始位置的排名，把排名（原始值）进行排序统计
+		++pCount[szCurValue];//排序统计出现次数
 	}
 	for (size_t szValue = 1; szValue < szCountLength; ++szValue)
 	{
@@ -52,12 +52,12 @@ void DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, std::vector<si
 	for (size_t szReverseIndex = szArrayLength; szReverseIndex >= 1; --szReverseIndex)//倒序遍历以获得稳定排序顺序
 	{
 		size_t szStartIndex = szReverseIndex - 1;//获取倒序下标当前的起始位置
-		size_t &curValue = pRank[szStartIndex];//获取对应起始位置的排名
-		size_t &curLastRank = pCount[curValue];//获取值的出现计数前缀和
+		size_t &szCurValue = pRank[szStartIndex];//获取对应起始位置的排名
+		size_t &szCurLastRank = pCount[szCurValue];//获取值的出现计数前缀和
 	
 		//按照i-1的值进行排名
-		pSufArr[curLastRank] = szStartIndex;//根据前缀和，获得当前szStartIndex位置值最后一个排名位置curLastRank，设置最后一个排名位置curLastRank的开始下标为zStartIndex
-		--curLastRank;//移动到前面，这样下一次遇到相同的值则放在前面
+		//移动到前面（把计数值转化为索引），修改原始值，这样下一次遇到相同的值则放在前面
+		pSufArr[--szCurLastRank] = szStartIndex;//根据前缀和，获得当前szStartIndex位置值最后一个排名位置szCurLastRank，设置最后一个排名位置szCurLastRank的开始下标为zStartIndex
 	}
 
 	/*
@@ -76,21 +76,20 @@ void DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, std::vector<si
 	for (size_t szDoublingStep = 1; true; szDoublingStep *= 2)
 	{
 		//第二关键字排序
-		size_t szSufArrIndex = 0;
+		size_t szNewRank = 0;
 
 		//先把倍增的溢出部分放到最前面，因为溢出值全为0，那么只能排第一
-		for (size_t i = szArrayLength - (szDoublingStep - 1); i < szArrayLength; i++)
+		for (size_t szRank = szArrayLength - szDoublingStep; szRank < szArrayLength; szRank++)
 		{
-			pNextSufArr[szSufArrIndex] = i;
-			++szSufArrIndex;
+			pNextSufArr[szNewRank++] = szRank;
 		}
 
-		for (size_t i = 0; i < szArrayLength; i++)
+		for (size_t szRank = 0; szRank < szArrayLength; szRank++)
 		{
-			if (pSufArr[i] > (szDoublingStep - 1))//获取所有排名i大于倍增其实位置的部分
+			size_t &szStartIndex = pSufArr[szRank];
+			if (szStartIndex > (szDoublingStep - 1))//获取所有排名中起始位置大于倍增量的部分
 			{
-				pNextSufArr[szSufArrIndex] = pSufArr[i] - (szDoublingStep - 1);//按照排名顺序，放入它的倍增配对位置的前面
-				++szSufArrIndex;
+				pNextSufArr[szNewRank++] = szStartIndex - szDoublingStep;//按照排名顺序，放入它的倍增配对位置的前面
 			}
 		}
 
@@ -99,8 +98,8 @@ void DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, std::vector<si
 		//计算出现次数
 		for (size_t szStartIndex = 0; szStartIndex < szArrayLength; ++szStartIndex)
 		{
-			size_t &curValue = pRank[szStartIndex];//遍历排名，把排名进行排序统计
-			++pCount[curValue];//排序统计出现次数
+			size_t &szCurValue = pRank[szStartIndex];//遍历排名，把排名进行排序统计
+			++pCount[szCurValue];//排序统计出现次数
 		}
 		for (size_t szValue = 1; szValue < szCountLength; ++szValue)
 		{
@@ -110,12 +109,12 @@ void DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, std::vector<si
 		{
 			size_t szReverseRank = szReverseRankIndex - 1;//获取倒序索引对应的实际排名
 			size_t &szStartIndex = pNextSufArr[szReverseRank];//获取当前排名的起始位置下标
-			size_t &curValue = pRank[szStartIndex];//从下标获取之前对应起始位置的排名
-			size_t &curLastRank = pCount[curValue];//获取值的出现计数前缀和
+			size_t &szCurValue = pRank[szStartIndex];//从下标获取之前对应起始位置的排名
+			size_t &szCurLastRank = pCount[szCurValue];//获取值的出现计数前缀和
 
 			//这里pNextSufArr是第二关键字的排序，根据第二关键字的排序的倒序，以及第一关键字的排序，合并为pSufArr的排序
-			pSufArr[curLastRank] = pNextSufArr[szReverseRank];//设置原先的排名位置为新的排序好的起始位置
-			--curLastRank;//设置排名为上一个
+			//移动到前面（把计数值转化为索引），修改原始值，这样下一次遇到相同的值则放在前面
+			pSufArr[--szCurLastRank] = pNextSufArr[szReverseRank];//设置原先的排名位置为新的排序好的起始位置
 		}
 
 		//拷贝之前的排名
@@ -125,7 +124,7 @@ void DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, std::vector<si
 		//注意因为保证szArrayLength至少为1，所以无需担心溢出
 
 		//第0次for，特殊处理，计算上一次迭代值
-		size_t szLastFirstStartIndex = pSufArr[0];
+		size_t szLastFirstStartIndex = pSufArr[0];//第0排名
 		size_t szLastSecondStartIndex = szLastFirstStartIndex + (szDoublingStep - 1);
 		size_t szLastFirstRank = pLastRank[szLastFirstStartIndex];
 		size_t szLastSecondRank = szLastSecondStartIndex < szArrayLength ? pLastRank[szLastSecondStartIndex] : (size_t)-1;
