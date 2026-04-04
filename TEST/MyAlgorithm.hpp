@@ -34,7 +34,7 @@ using ValueList = std::vector<T>;
 
 //返回值为排序在vSortArr中的下标，所以是size_t
 template<typename T>
-requires(std::is_integral_v<T> &&std::is_unsigned_v<T>)
+requires(std::is_integral_v<T> && std::is_unsigned_v<T> && sizeof(T) <= sizeof(size_t))
 ValueList<size_t> DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, const ValueList<T> &vSortArr)//szArrValueRange是上边界，无法取到
 {
 	//拒绝空值
@@ -57,10 +57,10 @@ ValueList<size_t> DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, c
 
 	//裁切内存，依次分配
 	size_t *pCount =		(size_t *)pMove; pMove += szCountSize;
-	size_t *pRank =			(size_t *)pMove; pMove += szArraySize * 1;
-	size_t *pLastRank =		(size_t *)pMove; pMove += szArraySize * 1;
-	size_t *pSufArr =		(size_t *)pMove; pMove += szArraySize * 1;
-	size_t *pNextSufArr =	(size_t *)pMove; pMove += szArraySize * 1;
+	size_t *pRank =			(size_t *)pMove; pMove += szArraySize;
+	size_t *pLastRank =		(size_t *)pMove; pMove += szArraySize;
+	size_t *pSufArr =		(size_t *)pMove; pMove += szArraySize;
+	size_t *pNextSufArr =	(size_t *)pMove; pMove += szArraySize;
 
 	//填0初始化
 	memset(pCount,		0, szCountSize);
@@ -71,12 +71,10 @@ ValueList<size_t> DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, c
 
 	PRINT_INF("begin\n");
 
-	//使得排名数组作为输入数组的拷贝
-	memcpy(&pRank[0], &vSortArr[0], szArraySize);
-
 	for (size_t szStartIndex = 0; szStartIndex < szArrayLength; ++szStartIndex)
 	{
 		size_t &szCurValue = pRank[szStartIndex];//这里把原始值当作起始位置的排名，把排名（原始值）进行排序统计
+		szCurValue = (size_t)vSortArr[szStartIndex];//使得排名数组作为输入数组的拷贝
 		++pCount[szCurValue];//排序统计出现次数
 	}
 	for (size_t szValue = 1; szValue < szCountLength; ++szValue)
@@ -222,13 +220,13 @@ ValueList<size_t> DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, c
 	PRINT_INF("end\n");
 
 	//准备返回值
-	ValueList listValue;
-	listValue.resize(szArrayLength);
-	memcpy(&listValue[0], pSufArr, szArraySize);
+	ValueList<size_t> listSufArrIndex;
+	listSufArrIndex.resize(szArrayLength);
+	memcpy(&listSufArrIndex[0], pSufArr, szArraySize);
 
 	//释放
 	delete[] pBase;
 	pBase = nullptr;
 
-	return listValue;
+	return listSufArrIndex;
 }
