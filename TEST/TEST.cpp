@@ -161,7 +161,7 @@ void DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, std::vector<si
 
 		//第0次for，特殊处理，计算上一次迭代值
 		size_t szLastFirstStartIndex = pSufArr[0];//第0排名
-		size_t szLastSecondStartIndex = szLastFirstStartIndex + (szDoublingStep - 1);
+		size_t szLastSecondStartIndex = szLastFirstStartIndex + szDoublingStep;
 		size_t szLastFirstRank = pLastRank[szLastFirstStartIndex];
 		size_t szLastSecondRank = szLastSecondStartIndex < szArrayLength ? pLastRank[szLastSecondStartIndex] : (size_t)-1;
 		//特殊设置
@@ -174,7 +174,7 @@ void DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, std::vector<si
 			size_t szCurrentFirstStartIndex = pSufArr[szRank];
 
 			//获取第二关键字起始索引，上一个在迭代中设置
-			size_t szCurrentSecondStartIndex = szCurrentFirstStartIndex + (szDoublingStep - 1);
+			size_t szCurrentSecondStartIndex = szCurrentFirstStartIndex + szDoublingStep;
 
 			//获取第一关键字排名，上一个在迭代中设置
 			size_t szCurrentFirstRank = pLastRank[szCurrentFirstStartIndex];
