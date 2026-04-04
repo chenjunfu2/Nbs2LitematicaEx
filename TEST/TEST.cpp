@@ -68,7 +68,7 @@ void DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, std::vector<si
 	*/
 
 	//进行倍增
-	for (size_t szDoublingStep = 1, szCurRank; true; szDoublingStep *= 2, szCountLength = szCurRank)
+	for (size_t szDoublingStep = 1; true; szDoublingStep *= 2)
 	{
 		//第二关键字排序
 		size_t szSufArrIndex = 0;
@@ -87,8 +87,8 @@ void DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, std::vector<si
 			}
 		}
 
-		//第一排序
-		memset(pCount, 0, sizeof(size_t) * szCountLength);//仅填充需要的部分
+		//每次计算并仅填充需要的部分（szCountLength会变化）
+		memset(pCount, 0, sizeof(size_t) * szCountLength);
 		//计算出现次数
 		for (size_t i = 0; i < szArrayLength; ++i)
 		{
@@ -109,7 +109,7 @@ void DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, std::vector<si
 			pSufArr[curCount] = pNextSufArr[i];//设置原先的排名位置为新的
 		}
 
-		szCurRank = 0;
+		size_t szCurRank = 0;
 		memcpy(pLastRank, pRank, szArraySize);//pRank是pLastRank的2倍大小，但是仅前半部分有用
 		for (size_t i = 1; i <= szArrayLength; ++i)
 		{
@@ -128,6 +128,8 @@ void DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, std::vector<si
 		{
 			break;
 		}
+
+		szCountLength = szCurRank;
 	}
 
 	for (size_t i = 1; i <= szArrayLength; ++i)
