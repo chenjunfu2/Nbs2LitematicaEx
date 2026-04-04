@@ -13,7 +13,7 @@ int main(void)
 
 	auto ret = DoublingCountingRadixSortSuffixArray(INT8_MAX, strInput);
 
-	for (auto &it : ret)
+	for (auto &it : ret.vSuffixArray)
 	{
 		printf("%zu ", it);
 	}

@@ -32,10 +32,16 @@ void PrintArr(const char *pArrName, size_t *pArr, size_t szArrLength)
 template<typename T>
 using ValueList = std::vector<T>;
 
+struct ValueListPair
+{
+	ValueList<size_t> vSuffixArray;
+	ValueList<size_t> vRank;
+};
+
 //返回值为排序在vSortArr中的下标，所以是size_t
 template<typename T>
 requires(std::is_integral_v<T> && std::is_unsigned_v<T> && sizeof(T) <= sizeof(size_t))
-ValueList<size_t> DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, const ValueList<T> &vSortArr)//szArrValueRange是上边界，无法取到
+ValueListPair DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, const ValueList<T> &vSortArr)//szArrValueRange是上边界，无法取到
 {
 	//拒绝空值
 	if (vSortArr.empty() || szArrValueRange == 0)
@@ -220,13 +226,16 @@ ValueList<size_t> DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, c
 	PRINT_INF("end\n");
 
 	//准备返回值
-	ValueList<size_t> listSufArrIndex;
-	listSufArrIndex.resize(szArrayLength);
-	memcpy(&listSufArrIndex[0], pSufArr, szArraySize);
+	ValueListPair retPair;
+	retPair.vSuffixArray.resize(szArrayLength);
+	memcpy(&retPair.vSuffixArray[0], pSufArr, szArraySize);
+
+	retPair.vRank.resize(szArrayLength);
+	memcpy(&retPair.vRank[0], pRank, szArraySize);
 
 	//释放
 	delete[] pBase;
 	pBase = nullptr;
 
-	return listSufArrIndex;
+	return retPair;
 }
