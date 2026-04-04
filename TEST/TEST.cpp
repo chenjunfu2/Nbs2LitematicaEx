@@ -5,82 +5,108 @@
 #include <algorithm>
 #include <vector>
 
-void DoublingCountingRadixSortSuffixArray(std::vector<char> strInput)
+void DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, std::vector<size_t> vSortArr)
 {
-	size_t szArrayLength = strInput.size();
-	size_t szCountMaxVal = std::max((size_t)127, szArrayLength);
+	size_t szArrayLength = vSortArr.size();//计算后缀、排名数组长度
+	size_t szCountLength = std::max(szArrValueRange, szArrayLength);//计算排序数组长度（值域或数组长度较大的那个）
 
-	size_t szCountSize = sizeof(size_t) * (szCountMaxVal + 2);
-	size_t szArraySize = sizeof(size_t) * (szArrayLength + 2);
-	uint8_t *pBase = new uint8_t[szCountSize + szArraySize * (4 + 2)];
-
+	//计算它们的大小
+	size_t szArraySize = sizeof(size_t) * szArrayLength;
+	size_t szCountSize = sizeof(size_t) * szCountLength;
+	
+	//用1字节大小分配：1个排序数组+4个后缀排名数组
+	uint8_t *pBase = new uint8_t[szCountSize + szArraySize * 4];
 	uint8_t *pMove = pBase;
-	size_t *pCount = (size_t *)pMove; pMove += szCountSize;
 
-	size_t *pRank =			(size_t *)pMove; pMove += szArraySize * 2;
+	//裁切内存，依次分配
+	size_t *pCount =		(size_t *)pMove; pMove += szCountSize;
+	size_t *pRank =			(size_t *)pMove; pMove += szArraySize * 1;
 	size_t *pLastRank =		(size_t *)pMove; pMove += szArraySize * 1;
-	size_t *pSufArr =		(size_t *)pMove; pMove += szArraySize * 2;
-	size_t *pLastSufArr =	(size_t *)pMove; pMove += szArraySize * 1;
+	size_t *pSufArr =		(size_t *)pMove; pMove += szArraySize * 1;
+	size_t *pNextSufArr =	(size_t *)pMove; pMove += szArraySize * 1;
 
+	//填0
 	memset(pCount, 0, szCountSize);
-
-	memset(pRank, 0, szArraySize * 2);//后半额外填充
+	memset(pRank, 0, szArraySize);
 	memset(pLastRank, 0, szArraySize);
-	memset(pSufArr, 0, szArraySize * 2);//后半额外填充
-	memset(pLastSufArr, 0, szArraySize);
+	memset(pSufArr, 0, szArraySize);
+	memset(pNextSufArr, 0, szArraySize);
 
-	//第一关键字排序
-	//计算出现次数
-	for (size_t i = 1; i <= szArrayLength; ++i)
+	//使得排名数组作为输入数组的拷贝
+	memcpy(&pRank[0], &vSortArr[0], szArraySize);
+
+	for (size_t szStartIndex = 0; szStartIndex < szArrayLength; ++szStartIndex)
 	{
-		++pCount[pRank[i] = strInput[i - 1]];
+		auto &curValue = pRank[szStartIndex];//这里把原始值当作起始位置的排名
+		++pCount[curValue];//排序统计出现次数
 	}
-	//前缀和获取值最后下标
-	for (size_t i = 1; i <= szCountMaxVal; ++i)
+	for (size_t szValue = 1; szValue < szCountLength; ++szValue)
 	{
-		pCount[i] += pCount[i - 1];
+		pCount[szValue] += pCount[szValue - 1];//根据出现次数计算前缀和
 	}
-	//1格排序
-	for (size_t i = szArrayLength; i >= 1; --i)
+	for (size_t szReverseIndex = szArrayLength; szReverseIndex >= 1; --szReverseIndex)//倒序遍历以获得稳定排序顺序
 	{
-		pSufArr[pCount[pRank[i]]--] = i;
+		auto szStartIndex = szReverseIndex - 1;//获取倒序下标当前的起始位置
+		auto &curValue = pRank[szStartIndex];//获取对应起始位置的排名
+		auto &curCount = pCount[curValue];//获取值的出现计数前缀和
+	
+		//按照i-1的值进行排名
+		pSufArr[curCount] = szStartIndex;//根据前缀和，获得当前szStartIndex位置值最后一个排名位置curCount，设置最后一个排名位置curCount的开始下标为zStartIndex
+		--curCount;//移动到前面，这样下一次遇到相同的值则放在前面
 	}
 
-	size_t szDoublingStep = 1, szCurRank = 0;
-	while (true)
+	/*
+	备注：
+	起始位置：当前子串在原始数组中开始的下标
+	排名：当前（下标指代的）子串在原始数组中的排序位置
+
+	SufArr[排名]=起始位置
+	Rank[起始位置]=排名
+	（SufArr与Rank互为反相）
+
+	Count[数值]=出现次数/出现次数的前缀和
+	*/
+
+	//进行倍增
+	for (size_t szDoublingStep = 1, szCurRank; true; szDoublingStep *= 2, szCountLength = szCurRank)
 	{
 		//第二关键字排序
-		size_t cur = 0;
+		size_t szSufArrIndex = 0;
 
-		for (size_t i = szArrayLength - szDoublingStep + 1; i <= szArrayLength; i++)
+		//先把倍增的溢出部分放到最前面，因为溢出值全为0，那么只能排第一
+		for (size_t i = szArrayLength - szDoublingStep; i < szArrayLength; i++)
 		{
-			pLastSufArr[++cur] = i;
+			pNextSufArr[++szSufArrIndex] = i;
 		}
 
-		for (size_t i = 1; i <= szArrayLength; i++)
+		for (size_t i = 0; i < szArrayLength; i++)
 		{
-			if (pSufArr[i] > szDoublingStep)
+			if (pSufArr[i] > (szDoublingStep - 1))//获取所有排名i大于倍增其实位置的部分
 			{
-				pLastSufArr[++cur] = pSufArr[i] - szDoublingStep;
+				pNextSufArr[++szSufArrIndex] = pSufArr[i] - (szDoublingStep - 1);//按照排名顺序，放入它的倍增配对位置的前面
 			}
 		}
 
 		//第一排序
-		memset(pCount, 0, szCountSize);//仅填充需要的部分
+		memset(pCount, 0, sizeof(size_t) * szCountLength);//仅填充需要的部分
 		//计算出现次数
-		for (size_t i = 1; i <= szArrayLength; ++i)
+		for (size_t i = 0; i < szArrayLength; ++i)
 		{
-			++pCount[pRank[pLastSufArr[i]]];
+			auto &curStartIndex = pNextSufArr[i];//依次获取当前排名i的起始位置
+			auto &curValue = pRank[curStartIndex];//根据起始位置依排名顺序得到排序的值
+			++pCount[curValue];//统计排序的值
 		}
-		//前缀和获取值最后下标
-		for (size_t i = 1; i <= szCountMaxVal; ++i)
+		for (size_t i = 1; i < szCountLength; ++i)
 		{
-			pCount[i] += pCount[i - 1];
+			pCount[i] += pCount[i - 1];//前缀和
 		}
-		//排序
-		for (size_t i = szArrayLength; i >= 1; --i)
+		for (size_t szReverseIndex = szArrayLength; szReverseIndex >= 1; --szReverseIndex)
 		{
-			pSufArr[pCount[pRank[pLastSufArr[i]]]--] = pLastSufArr[i];
+			auto szStartIndex = szReverseIndex - 1;//获取倒序下标当前的起始位置
+			auto &curValue = pRank[szStartIndex];//获取对应起始位置的排名
+			auto &curCount = pCount[curValue];//获取值的出现计数前缀和
+
+			pSufArr[curCount] = pNextSufArr[i];//设置原先的排名位置为新的
 		}
 
 		szCurRank = 0;
@@ -97,14 +123,11 @@ void DoublingCountingRadixSortSuffixArray(std::vector<char> strInput)
 				pRank[pSufArr[i]] = ++szCurRank;
 			}
 		}
+
 		if (szCurRank == szArrayLength)
 		{
 			break;
 		}
-
-		//迭代
-		szCountMaxVal = szCurRank;//szCurRank相当于MaxRank
-		szDoublingStep *= 2;//倍增
 	}
 
 	for (size_t i = 1; i <= szArrayLength; ++i)
