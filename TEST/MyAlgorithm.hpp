@@ -29,8 +29,12 @@ void PrintArr(const char *pArrName, size_t *pArr, size_t szArrLength)
 #define PRINT_INF(fmt, ...)
 #endif
 
-using ValueList = std::vector<size_t>;
-ValueList DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, const ValueList &vSortArr)//szArrValueRange是上边界，无法取到
+template<typename T>
+using ValueList = std::vector<T>;
+
+template<typename T>
+requires(std::is_integral_v<T> &&std::is_unsigned_v<T>)
+ValueList<T> DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, const ValueList<T> &vSortArr)//szArrValueRange是上边界，无法取到
 {
 	//拒绝空值
 	if (vSortArr.empty() || szArrValueRange == 0)
