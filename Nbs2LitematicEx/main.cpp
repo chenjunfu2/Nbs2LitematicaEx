@@ -12,6 +12,8 @@
 #include <vector>
 #include <unordered_map>
 
+#include "MyAlgorithm.hpp"
+
 template<typename... Args>
 void print(std::format_string<Args...> fmt, Args&&... args)
 {
@@ -357,147 +359,17 @@ public:
 	HeightArray HighArr;
 };
 
-
-SAHI DoublingCountingRadixSortSuffixArray(const NoteVal &valNote)
+SAHI NoteValToSAHI(const NoteVal &valNote)
 {
-	size_t szCountMaxVal = valNote.listNoteSubMap.size() + 1;
-	size_t szArrayLength = valNote.listEncodeNoteSub.size();
-
-	size_t szArraySize = sizeof(size_t) * (szArrayLength + 1);//从1~length，所以多分配一个
-	uint8_t *pBase = new uint8_t[szArraySize * (5 + 2)];
-
-	size_t szBegIndex = 0;
-	size_t *pCount =		(size_t *)&pBase[szArraySize * szBegIndex]; szBegIndex += 1;
-	size_t *pRank =			(size_t *)&pBase[szArraySize * szBegIndex]; szBegIndex += 2;
-	size_t *pLastRank =		(size_t *)&pBase[szArraySize * szBegIndex]; szBegIndex += 1;
-	size_t *pSufArr =		(size_t *)&pBase[szArraySize * szBegIndex]; szBegIndex += 2;
-	size_t *pLastSufArr =	(size_t *)&pBase[szArraySize * szBegIndex]; szBegIndex += 1;
-
-	memset(pCount, 0, szArraySize);
-
-	memset(pRank, 0, szArraySize * 2);//后半额外填充
-	memset(pLastRank, 0, szArraySize);
-	memset(pSufArr, 0, szArraySize * 2);//后半额外填充
-	memset(pLastSufArr, 0, szArraySize);
-
-	//第一关键字排序
-	//计算出现次数
-	for (size_t i = 1; i <= szArrayLength; ++i)
+	auto ret = DoublingCountingRadixSortSuffixArray(valNote.listNoteSubMap.size(), valNote.listEncodeNoteSub);
+	auto ret2 = HeightArray(valNote.listEncodeNoteSub, ret);
+	return SAHI
 	{
-		++pCount[pRank[i] = valNote.listEncodeNoteSub[i - 1] + 1];
-	}
-	//前缀和获取值最后下标
-	for (size_t i = 1; i <= szCountMaxVal; ++i)
-	{
-		pCount[i] += pCount[i - 1];
-	}
-	//1格排序
-	for (size_t i = szArrayLength; i >= 1; --i)
-	{
-		pSufArr[pCount[pRank[i]]--] = i;
-	}
-
-	size_t szDoublingStep = 1, szCurRank = 0;
-	while (true)
-	{
-		//第二关键字排序
-		size_t cur = 0;
-
-		for (size_t i = szArrayLength - szDoublingStep + 1; i <= szArrayLength; i++)
-		{
-			pLastSufArr[++cur] = i;
-		}
-
-		for (size_t i = 1; i <= szArrayLength; i++)
-		{
-			if (pSufArr[i] > szDoublingStep)
-			{
-				pLastSufArr[++cur] = pSufArr[i] - szDoublingStep;
-			}
-		}
-
-		//第一排序
-		memset(pCount, 0, (szCountMaxVal + 1) * sizeof(size_t));//仅填充需要的部分
-		//计算出现次数
-		for (size_t i = 1; i <= szArrayLength; ++i)
-		{
-			++pCount[pRank[pLastSufArr[i]]];
-		}
-		//前缀和获取值最后下标
-		for (size_t i = 1; i <= szCountMaxVal; ++i)
-		{
-			pCount[i] += pCount[i - 1];
-		}
-		//排序
-		for (size_t i = szArrayLength; i >= 1; --i)
-		{
-			pSufArr[pCount[pRank[pLastSufArr[i]]]--] = pLastSufArr[i];
-		}
-
-		szCurRank = 0;
-		memcpy(pLastRank, pRank, szArraySize);//pRank是pLastRank的2倍大小，但是仅前半部分有用
-		for (size_t i = 1; i <= szArrayLength; ++i)
-		{
-			if (pLastRank[pSufArr[i]] == pLastRank[pSufArr[i - 1]] &&
-				pLastRank[pSufArr[i] + szDoublingStep] == pLastRank[pSufArr[i - 1] + szDoublingStep])
-			{
-				pRank[pSufArr[i]] = szCurRank;
-			}
-			else
-			{
-				pRank[pSufArr[i]] = ++szCurRank;
-			}
-		}
-		if (szCurRank == szArrayLength)
-		{
-			break;
-		}
-
-		//迭代
-		szCountMaxVal = szCurRank;//szCurRank相当于MaxRank
-		szDoublingStep *= 2;//倍增
-	}
-
-	//准备返回
-	SAHI ret;
-
-	ret.SuffArr.reserve(szArrayLength);
-	for (size_t i = 1; i <= szArrayLength; ++i)
-	{
-		ret.SuffArr.push_back(pSufArr[i] - 1);
-	}
-
-	ret.HighArr.resize(szArrayLength);
-	for (size_t i = 1, k = 0; i <= szArrayLength; ++i)
-	{
-		if (pRank[i] == 0)
-		{
-			continue;
-		}
-
-		if (k != 0)
-		{
-			--k;
-		}
-
-
-		auto j = pSufArr[pRank[i] - 1];
-		while (j + k != 0 && i + k != 0 &&
-			i - 1 + k < valNote.listEncodeNoteSub.size() && j - 1 + k < valNote.listEncodeNoteSub.size() &&
-			valNote.listEncodeNoteSub[i - 1 + k] == valNote.listEncodeNoteSub[j - 1 + k])
-		{
-			++k;
-		}
-
-		ret.HighArr[pRank[i] - 1] = k;
-	}
-
-	//释放
-	delete[] pBase;
-	pBase = nullptr;
-
-	return ret;
+		.SuffArr = std::move(ret.vSuffixArray),
+		.HighArr = std::move(ret2),
+	};
 }
+
 
 struct RepeatSubNote
 {
@@ -673,7 +545,7 @@ int main(int argc, char *argv[]) try
 	//从0~valNote.listNoteSubMap.size()即为值域大小
 	//根据值域选择使用的算法（较小使用基数计数排序，较大使用普通排序）
 
-	auto sahi = DoublingCountingRadixSortSuffixArray(valNote);
+	auto sahi = NoteValToSAHI(valNote);
 
 	auto listRepeatSubNote = RepeatSubNoteFinder::FindAll(valNote, sahi);
 
