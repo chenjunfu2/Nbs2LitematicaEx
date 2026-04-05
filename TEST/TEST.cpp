@@ -1,4 +1,4 @@
-﻿#include "MyAlgorithm.hpp"
+﻿#include "../Nbs2LitematicEx/MyAlgorithm.hpp"
 #include <stdio.h>
 
 int main(void)
