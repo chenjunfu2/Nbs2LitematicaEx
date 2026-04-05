@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <vector>
+#include <type_traits>
 
 #ifdef DoublingCountingRadixSortSuffixArray_Debug
 #include <stdio.h>
@@ -41,16 +42,16 @@ struct ValueListPair
 //返回值为排序在vSortArr中的下标，所以是size_t
 template<typename T>
 requires(std::is_integral_v<T> && std::is_unsigned_v<T> && sizeof(T) <= sizeof(size_t))
-ValueListPair DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, const ValueList<T> &vSortArr)//szArrValueRange是上边界，无法取到
+ValueListPair DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, const ValueList<T> &vInputArr)//szArrValueRange是上边界，无法取到
 {
 	//拒绝空值
-	if (vSortArr.empty() || szArrValueRange == 0)
+	if (vInputArr.empty() || szArrValueRange == 0)
 	{
 		return {};
 	}
 
 	//计算长度
-	size_t szArrayLength = vSortArr.size();//计算后缀、排名数组长度
+	size_t szArrayLength = vInputArr.size();//计算后缀、排名数组长度
 	size_t szCountLength = szArrValueRange > szArrayLength ? szArrValueRange : szArrayLength;//计算排序数组长度（值域或数组长度较大的那个）
 
 	//计算大小
@@ -80,7 +81,7 @@ ValueListPair DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, const
 	for (size_t szStartIndex = 0; szStartIndex < szArrayLength; ++szStartIndex)
 	{
 		size_t &szCurValue = pRank[szStartIndex];//这里把原始值当作起始位置的排名，把排名（原始值）进行排序统计
-		szCurValue = (size_t)vSortArr[szStartIndex];//使得排名数组作为输入数组的拷贝
+		szCurValue = (size_t)vInputArr[szStartIndex];//使得排名数组作为输入数组的拷贝
 		++pCount[szCurValue];//排序统计出现次数
 	}
 	for (size_t szValue = 1; szValue < szCountLength; ++szValue)
@@ -119,12 +120,12 @@ ValueListPair DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, const
 		PRINT_INF("for[%zu]\n", szDoublingStep);
 
 		//第二关键字排序
-		size_t szNewRank = 0;
+		size_t szNewRank = (size_t)-1;//利用-1环绕，使得后续可以使用前缀递增减少开销
 
 		//先把倍增的溢出部分放到最前面，因为溢出值全为0，那么只能排第一
 		for (size_t szStartIndex = szArrayLength - szDoublingStep; szStartIndex < szArrayLength; szStartIndex++)
 		{
-			pNextSufArr[szNewRank++] = szStartIndex;
+			pNextSufArr[++szNewRank] = szStartIndex;
 		}
 
 		for (size_t szRank = 0; szRank < szArrayLength; szRank++)
@@ -132,7 +133,7 @@ ValueListPair DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, const
 			size_t &szStartIndex = pSufArr[szRank];
 			if (szStartIndex > (szDoublingStep - 1))//获取所有排名中起始位置大于倍增量的部分
 			{
-				pNextSufArr[szNewRank++] = szStartIndex - szDoublingStep;//按照排名顺序，放入它的倍增配对位置的前面
+				pNextSufArr[++szNewRank] = szStartIndex - szDoublingStep;//按照排名顺序，放入它的倍增配对位置的前面
 			}
 		}
 
@@ -238,4 +239,47 @@ ValueListPair DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, const
 	pBase = nullptr;
 
 	return retPair;
+}
+
+template<typename T>
+requires(std::is_integral_v<T> &&std::is_unsigned_v<T> && sizeof(T) <= sizeof(size_t))
+ValueList<size_t> HegihtArray(const ValueList<T> &vInputArr, const ValueListPair &vlp)
+{
+	if (vInputArr.empty())
+	{
+		return {};
+	}
+
+	size_t szArrayLength = vlp.vRank.size();//size is length not sizeof(value_type) * length
+
+	ValueList<size_t> vHeight;
+	vHeight.resize(szArrayLength);
+
+	for (size_t szStartIndex = 0, szMatchLength = 0; szStartIndex < szArrayLength; ++szStartIndex)
+	{
+		//排名0没有上一排名，跳过
+		const size_t &szCurrentRank = vlp.vRank[szStartIndex];
+		if (szCurrentRank == 0)
+		{
+			continue;
+		}
+
+		//如果不为0则递减1
+		szMatchLength -= (size_t)(szMatchLength != 0);
+
+		//获取上一名的开始位置
+		size_t szLastRank = szCurrentRank - 1;
+		size_t szLastStartIndex = vlp.vSuffixArray[szLastRank];
+
+		//如果字符串匹配，那么继续
+		while (vInputArr[szStartIndex + szMatchLength] == vInputArr[szLastStartIndex + szMatchLength])
+		{
+			++szMatchLength;
+		}
+
+		//不匹配，设置当前为最长前缀
+		vHeight[szCurrentRank] = szMatchLength;
+	}
+	
+	return vHeight;
 }
