@@ -243,7 +243,7 @@ ValueListPair DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, const
 
 template<typename T>
 requires(std::is_integral_v<T> &&std::is_unsigned_v<T> && sizeof(T) <= sizeof(size_t))
-ValueList<size_t> HeightArray(const ValueList<T> &vInputArr, const ValueListPair &vlp)
+ValueList<size_t> LcpHeightArray(const ValueList<T> &vInputArr, const ValueListPair &vlp)
 {
 	if (vInputArr.empty())
 	{

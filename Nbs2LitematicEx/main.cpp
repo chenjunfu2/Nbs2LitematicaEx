@@ -361,7 +361,7 @@ public:
 SAHI NoteValToSAHI(const NoteVal &valNote)
 {
 	auto ret = DoublingCountingRadixSortSuffixArray(valNote.listNoteSubMap.size(), valNote.listEncodeNoteSub);
-	auto ret2 = HeightArray(valNote.listEncodeNoteSub, ret);
+	auto ret2 = LcpHeightArray(valNote.listEncodeNoteSub, ret);
 	return SAHI
 	{
 		.SuffArr = std::move(ret.vSuffixArray),
@@ -621,10 +621,9 @@ int main(int argc, char *argv[]) try
 				const auto &note = valNote.listNoteSubMap[encodeVal];
 				note.Print();
 			}
-			print("------------------------------------------\n\n");
 		}
+		print("------------------------------------------\n\n");
 	}
-
 
 	return 0;
 }

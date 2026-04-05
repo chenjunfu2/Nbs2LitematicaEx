@@ -12,7 +12,7 @@ int main(void)
 	}
 
 	const auto ret = DoublingCountingRadixSortSuffixArray(INT8_MAX, strInput);
-	const auto ret2 = HeightArray(strInput, ret);
+	const auto ret2 = LcpHeightArray(strInput, ret);
 
 	for (auto &it : ret.vSuffixArray)
 	{
