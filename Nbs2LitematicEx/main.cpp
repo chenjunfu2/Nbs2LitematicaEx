@@ -281,57 +281,56 @@ NoteVal ToNoteVal(const MyNoteSubList &listNoteSub)
 }
 
 
+using InstGroupNote = std::vector<MyNoteList>;
 
-//using InstGroupNote = std::vector<MyNoteList>;
-//
-//InstGroupNote ToInstMap(MyNoteList &listNote)
-//{
-//	if (listNote.empty())
-//	{
-//		return {};
-//	}
-//
-//	std::ranges::sort(listNote,
-//		[](const MyNote &l, const MyNote &r) -> bool //升序排列，先按照组，然后按照tick，最后按照key
-//		{
-//			if (l.instrument != r.instrument)
-//			{
-//				return l.instrument < r.instrument;
-//			}
-//			else if (l.tick != r.tick)
-//			{
-//				return l.tick < r.tick;
-//			}
-//			else
-//			{
-//				return l.key < r.key;
-//			}
-//		}
-//	);
-//
-//	InstGroupNote groupNote;
-//	NBS_File::BYTE bLastInstrument = listNote.front().instrument;
-//	MyNoteList tempList;
-//	for (auto &it : listNote)
-//	{
-//		if (bLastInstrument != it.instrument)
-//		{
-//			bLastInstrument = it.instrument;
-//			groupNote.push_back(std::move(tempList));
-//			tempList.clear();
-//		}
-//		//不论如何都插入，如果遇到不等的情况，上面会进行清理
-//		tempList.push_back(std::move(it));
-//	}
-//
-//	//如果最后一个不为空，那么插入最终的值
-//	if (!tempList.empty())
-//	{
-//		groupNote.push_back(std::move(tempList));
-//	}
-//
-//	return groupNote;
-//}
+InstGroupNote ToInstMap(MyNoteList &listNote)
+{
+	if (listNote.empty())
+	{
+		return {};
+	}
+
+	std::ranges::sort(listNote,
+		[](const MyNote &l, const MyNote &r) -> bool //升序排列，先按照组，然后按照tick，最后按照key
+		{
+			if (l.instrument != r.instrument)
+			{
+				return l.instrument < r.instrument;
+			}
+			else if (l.tick != r.tick)
+			{
+				return l.tick < r.tick;
+			}
+			else
+			{
+				return l.key < r.key;
+			}
+		}
+	);
+
+	InstGroupNote groupNote;
+	NBS_File::BYTE bLastInstrument = listNote.front().instrument;
+	MyNoteList tempList;
+	for (auto &it : listNote)
+	{
+		if (bLastInstrument != it.instrument)
+		{
+			bLastInstrument = it.instrument;
+			groupNote.push_back(std::move(tempList));
+			tempList.clear();
+		}
+		//不论如何都插入，如果遇到不等的情况，上面会进行清理
+		tempList.push_back(std::move(it));
+	}
+
+	//如果最后一个不为空，那么插入最终的值
+	if (!tempList.empty())
+	{
+		groupNote.push_back(std::move(tempList));
+	}
+
+	return groupNote;
+}
 	////根据音符类型拆散
 	//auto groupNote = ToInstMap(noteList);
 	//noteList.~vector();
@@ -391,7 +390,7 @@ public:
 		std::vector<RepeatSubNote> result;
 		std::vector<bool> covered(n, false);
 
-		// 使用并查集优化覆盖检查
+		// 并查集：next_free[i] 表示从位置 i 开始下一个未被覆盖的位置
 		std::vector<size_t> next_free(n + 1);
 		for (size_t i = 0; i <= n; ++i) next_free[i] = i;
 
@@ -436,16 +435,8 @@ public:
 					// 检查是否能放下整个子串
 					if (actual_pos + len <= n)
 					{
-						// 检查这个区间是否完全未被覆盖
-						bool valid = true;
-						for (size_t j = actual_pos; j < actual_pos + len; ++j)
-						{
-							if (covered[j])
-							{
-								valid = false;
-								break;
-							}
-						}
+						// 检查这个区间是否完全未被覆盖（通过并查集快速验证）
+						bool valid = checkIntervalFree(actual_pos, len, next_free, n);
 
 						if (valid && (selected.empty() || actual_pos >= last_end))
 						{
@@ -467,13 +458,8 @@ public:
 					// 标记覆盖
 					for (size_t pos : selected)
 					{
-						for (size_t j = pos; j < pos + len; ++j)
-						{
-							covered[j] = true;
-							next_free[j] = j + len;
-						}
+						markCovered(pos, len, covered, next_free, n);
 					}
-					rebuildNextFree(next_free, n);
 				}
 			}
 		}
@@ -482,24 +468,61 @@ public:
 	}
 
 private:
-	static size_t findNextFree(size_t pos, const std::vector<size_t> &next_free, size_t n)
+	// 带路径压缩的查找
+	static size_t findNextFree(size_t pos, std::vector<size_t> &next_free, size_t n)
 	{
 		if (pos >= n) return n;
-		if (next_free[pos] == pos) return pos;
-		return findNextFree(next_free[pos], next_free, n);
+		if (next_free[pos] != pos)
+		{
+			next_free[pos] = findNextFree(next_free[pos], next_free, n);
+		}
+		return next_free[pos];
 	}
 
-	static void rebuildNextFree(std::vector<size_t> &next_free, size_t n)
+	// 检查区间 [start, start+len) 是否完全未被覆盖
+	static bool checkIntervalFree(size_t start, size_t len,
+		std::vector<size_t> &next_free, size_t n)
 	{
-		for (size_t i = n; i > 0; --i)
+		size_t pos = start;
+		while (pos < start + len)
 		{
-			if (next_free[i - 1] != i - 1)
+			if (next_free[pos] != pos)  // 当前位置已被覆盖
+				return false;
+			pos++;
+		}
+		return true;
+	}
+
+	// 标记区间 [start, start+len) 为已覆盖
+	static void markCovered(size_t start, size_t len,
+		std::vector<bool> &covered,
+		std::vector<size_t> &next_free,
+		size_t n)
+	{
+		for (size_t j = start; j < start + len; ++j)
+		{
+			covered[j] = true;
+			// 将当前位置指向下一个位置
+			next_free[j] = findNextFree(j + 1, next_free, n);
+		}
+
+		// 修复前面可能指向当前位置的节点
+		// 只修复 start 之前的相邻区域
+		for (size_t j = start; j > 0; --j)
+		{
+			size_t idx = j - 1;
+			if (next_free[idx] >= start && next_free[idx] < start + len)
 			{
-				next_free[i - 1] = findNextFree(next_free[i - 1], next_free, n);
+				next_free[idx] = findNextFree(start, next_free, n);
+			}
+			else if (next_free[idx] != idx)
+			{
+				break;  // 已经指向更远的区域，不需要继续
 			}
 		}
 	}
 };
+
 
 
 int main(int argc, char *argv[]) try
@@ -517,58 +540,91 @@ int main(int argc, char *argv[]) try
 		it.Print();
 	}
 
-	print("\n==========================================\n\n");
+//	print("\n==========================================\n\n");
+//
+//	//拆分为排序序列，同tick音符合并，跨tick音符转为静音tick
+//	auto listNoteSub = ToMyNoteSubList(noteList);
+//	for (auto &it : listNoteSub)
+//	{
+//		it.Print();
+//	}
+//
+//	print("\n==========================================\n\n");
+//
+//	//后缀数组sa+LCP查找所有重复子串，使用贪心匹配最大不重叠子串集合，相似性匹配递归找变化子序列
+//	//根据集合完成重复序列收集
+//	//目前考虑算法先对完整组做一次，再对每个乐器分组做一次，最后分别输出
+//
+//	//首先，对每个音符、空白音符做唯一值ID映射，映射为一段连续的值域
+//	//通过unordered map进行查重和下标映射，vector对应下标存储具体音符值
+//	NoteVal valNote = ToNoteVal(listNoteSub);
+//
+//	//后缀数组：https://oi-wiki.org/string/sa/
+//	//SA-IS：https://www.luogu.com.cn/article/eugf8e8y
+//
+//	//先实现基础版本，后续再考虑是否优化SA-IS
+//
+//	//在这里，NoteVal存储离散化的双向映射
+//	//从0~valNote.listNoteSubMap.size()即为值域大小
+//	//根据值域选择使用的算法（较小使用基数计数排序，较大使用普通排序）
+//
+//	auto sahi = NoteValToSAHI(valNote);
+//
+//	auto listRepeatSubNote = RepeatSubNoteFinder::FindAll(valNote, sahi);
+//
+//	// 输出结果（解码后的实际内容）
+//	for (const auto &sub : listRepeatSubNote)
+//	{
+//		print("------------------------------------------\nsub length: [{}]\npos: ", sub.length);
+//		for (size_t pos : sub.occurrences)
+//		{
+//			print("[{}],", pos);
+//		}
+//		print("\n");
+//
+//		// 输出实际内容（解码）
+//		print("notes:\n");
+//		for (size_t j = sub.start; j < sub.start + sub.length; ++j)
+//		{
+//			size_t encodeVal = valNote.listEncodeNoteSub[j];
+//			const auto &note = valNote.listNoteSubMap[encodeVal];
+//			note.Print();
+//		}
+//		print("------------------------------------------\n\n");
+//	}
 
-	//拆分为排序序列，同tick音符合并，跨tick音符转为静音tick
-	auto listNoteSub = ToMyNoteSubList(noteList);
-	for (auto &it : listNoteSub)
+	//从音符列表挨个生成
+	auto mapInst = ToInstMap(noteList);
+	for (auto &it : mapInst)
 	{
-		it.Print();
+		auto listNoteSub = ToMyNoteSubList(it);
+		NoteVal valNote = ToNoteVal(listNoteSub);
+		auto sahi = NoteValToSAHI(valNote);
+		auto listRepeatSubNote = RepeatSubNoteFinder::FindAll(valNote, sahi);
+
+		print("------------------------------------------\nInst: [{}], Count: [{}]\n", it.front().instrument, it.size());
+		// 输出结果（解码后的实际内容）
+		for (const auto &sub : listRepeatSubNote)
+		{
+			print("------------------------------------------\nsub length: [{}]\npos: ", sub.length);
+			for (size_t pos : sub.occurrences)
+			{
+				print("[{}],", pos);
+			}
+			print("\n");
+
+			// 输出实际内容（解码）
+			print("notes:\n");
+			for (size_t j = sub.start; j < sub.start + sub.length; ++j)
+			{
+				size_t encodeVal = valNote.listEncodeNoteSub[j];
+				const auto &note = valNote.listNoteSubMap[encodeVal];
+				note.Print();
+			}
+			print("------------------------------------------\n\n");
+		}
 	}
 
-	print("\n==========================================\n\n");
-
-	//后缀数组sa+LCP查找所有重复子串，使用贪心匹配最大不重叠子串集合，相似性匹配递归找变化子序列
-	//根据集合完成重复序列收集
-	//目前考虑算法先对完整组做一次，再对每个乐器分组做一次，最后分别输出
-
-	//首先，对每个音符、空白音符做唯一值ID映射，映射为一段连续的值域
-	//通过unordered map进行查重和下标映射，vector对应下标存储具体音符值
-	NoteVal valNote = ToNoteVal(listNoteSub);
-
-	//后缀数组：https://oi-wiki.org/string/sa/
-	//SA-IS：https://www.luogu.com.cn/article/eugf8e8y
-
-	//先实现基础版本，后续再考虑是否优化SA-IS
-
-	//在这里，NoteVal存储离散化的双向映射
-	//从0~valNote.listNoteSubMap.size()即为值域大小
-	//根据值域选择使用的算法（较小使用基数计数排序，较大使用普通排序）
-
-	auto sahi = NoteValToSAHI(valNote);
-
-	auto listRepeatSubNote = RepeatSubNoteFinder::FindAll(valNote, sahi);
-
-	// 输出结果（解码后的实际内容）
-	for (const auto &sub : listRepeatSubNote)
-	{
-		print("------------------------------------------\nsub length: [{}]\npos: ", sub.length);
-		for (size_t pos : sub.occurrences)
-		{
-			print("[{}],", pos);
-		}
-		print("\n");
-
-		// 输出实际内容（解码）
-		print("notes:\n");
-		for (size_t j = sub.start; j < sub.start + sub.length; ++j)
-		{
-			size_t encodeVal = valNote.listEncodeNoteSub[j];
-			const auto &note = valNote.listNoteSubMap[encodeVal];
-			note.Print();
-		}
-		print("------------------------------------------\n\n");
-	}
 
 	return 0;
 }
