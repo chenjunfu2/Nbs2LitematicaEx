@@ -261,6 +261,7 @@ ValueList<size_t> HegihtArray(const ValueList<T> &vInputArr, const ValueListPair
 		const size_t &szCurrentRank = vlp.vRank[szStartIndex];
 		if (szCurrentRank == 0)
 		{
+			vHeight[szCurrentRank] = 0;
 			continue;
 		}
 
@@ -271,13 +272,14 @@ ValueList<size_t> HegihtArray(const ValueList<T> &vInputArr, const ValueListPair
 		size_t szLastRank = szCurrentRank - 1;
 		size_t szLastStartIndex = vlp.vSuffixArray[szLastRank];
 
-		//如果字符串匹配，那么继续
-		while (vInputArr[szStartIndex + szMatchLength] == vInputArr[szLastStartIndex + szMatchLength])
+		//如果字符串未溢出且匹配，那么继续
+		while (szStartIndex + szMatchLength < szArrayLength && szLastStartIndex + szMatchLength < szArrayLength &&
+			   vInputArr[szStartIndex + szMatchLength] == vInputArr[szLastStartIndex + szMatchLength])
 		{
 			++szMatchLength;
 		}
 
-		//不匹配，设置当前为最长前缀
+		//不匹配或溢出，设置当前为最长前缀
 		vHeight[szCurrentRank] = szMatchLength;
 	}
 	

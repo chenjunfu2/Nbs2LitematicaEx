@@ -11,9 +11,17 @@ int main(void)
 		strInput.push_back(c);
 	}
 
-	auto ret = DoublingCountingRadixSortSuffixArray(INT8_MAX, strInput);
+	const auto ret = DoublingCountingRadixSortSuffixArray(INT8_MAX, strInput);
+	const auto ret2 = HegihtArray(strInput, ret);
 
 	for (auto &it : ret.vSuffixArray)
+	{
+		printf("%zu ", it);
+	}
+
+	putchar('\n');
+
+	for (auto &it : ret2)
 	{
 		printf("%zu ", it);
 	}
