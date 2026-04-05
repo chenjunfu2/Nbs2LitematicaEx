@@ -255,6 +255,11 @@ ValueList<size_t> LcpHeightArray(const ValueList<T> &vInputArr, const ValueListP
 	ValueList<size_t> vHeight;
 	vHeight.resize(szArrayLength);
 
+	/*
+	Height[排名]=排名与前一名的最长公共前缀长度
+	Height[i] = LCP(SA[i-1], SA[i])
+	*/
+
 	for (size_t szStartIndex = 0, szMatchLength = 0; szStartIndex < szArrayLength; ++szStartIndex)
 	{
 		//排名0没有上一排名，跳过
