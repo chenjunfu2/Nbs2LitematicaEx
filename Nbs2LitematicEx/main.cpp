@@ -523,6 +523,249 @@ private:
 	}
 };
 
+//==================================================================================//
+
+// 用于存储结果的子串信息
+struct RepeatSubstring
+{
+	size_t length;                       // 子串总长度（元素个数）
+	std::vector<size_t> occurrences;     // 不重叠的起始位置（已排序且互不重叠）
+	std::vector<MyNoteSub> content;      // 子串的实际内容（解码后）
+};
+
+// 检查长度 L 是否存在至少一对满足条件的重复子串（不重叠+音符约束）
+static bool CheckLengthExists(
+	size_t L,
+	const SAHI &sahi,
+	const NoteVal &valNote,
+	const std::vector<size_t> &prefixNote      // 前缀和：prefixNote[i] = 前 i 个元素中 Note 的数量
+)
+{
+	const size_t n = valNote.listEncodeNoteSub.size();
+	const auto &sa = sahi.SuffArr;
+	const auto &lcp = sahi.HighArr;
+
+	size_t i = 1; // lcp 下标从 1 开始有意义
+	while (i < n)
+	{
+		if (lcp[i] < L)
+		{
+			++i;
+			continue;
+		}
+		// 开始一个新组
+		size_t minPos = sa[i - 1], maxPos = sa[i - 1];
+		bool hasValid = false; // 组内是否有有效起始位置（满足音符约束）
+
+		// 检查组内第一个后缀的起始位置
+		size_t pos0 = sa[i - 1];
+		if (pos0 + L <= n)
+		{
+			size_t noteCnt = prefixNote[pos0 + L] - prefixNote[pos0];
+			bool notAllBlank = (noteCnt >= 2);
+			// 检查结尾是否为 Blank
+			size_t lastCode = valNote.listEncodeNoteSub[pos0 + L - 1];
+			bool notEndBlank = (valNote.listNoteSubMap[lastCode].enType != MyNoteSub::Type::Blank);
+			if (notAllBlank && notEndBlank)
+			{
+				hasValid = true;
+				minPos = maxPos = pos0;
+			}
+		}
+		// 扩展组内其他后缀
+		while (i < n && lcp[i] >= L)
+		{
+			size_t pos = sa[i];
+			if (pos + L <= n)
+			{
+				size_t noteCnt = prefixNote[pos + L] - prefixNote[pos];
+				bool notAllBlank = (noteCnt >= 2);
+				size_t lastCode = valNote.listEncodeNoteSub[pos + L - 1];
+				bool notEndBlank = (valNote.listNoteSubMap[lastCode].enType != MyNoteSub::Type::Blank);
+				if (notAllBlank && notEndBlank)
+				{
+					if (!hasValid)
+					{
+						hasValid = true;
+						minPos = maxPos = pos;
+					}
+					else
+					{
+						minPos = std::min(minPos, pos);
+						maxPos = std::max(maxPos, pos);
+					}
+				}
+			}
+			++i;
+		}
+		// 检查本组是否存在不重叠对
+		if (hasValid && maxPos - minPos >= L)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+// 二分查找最大可行长度
+static size_t FindMaxLength(
+	const SAHI &sahi,
+	const NoteVal &valNote,
+	const std::vector<size_t> &prefixNote
+)
+{
+	size_t n = valNote.listEncodeNoteSub.size();
+	size_t lo = 2, hi = n, ans = 0;
+	while (lo <= hi)
+	{
+		size_t mid = (lo + hi) / 2;
+		if (CheckLengthExists(mid, sahi, valNote, prefixNote))
+		{
+			ans = mid;
+			lo = mid + 1;
+		}
+		else
+		{
+			hi = mid - 1;
+		}
+	}
+	return ans;
+}
+
+// 对于给定的长度 L，收集所有满足条件的重复子串（内容不同），每个子串附带所有有效起始位置（经过不重叠筛选）
+static std::vector<RepeatSubstring> CollectAllRepeatsOfLength(
+	size_t L,
+	const SAHI &sahi,
+	const NoteVal &valNote,
+	const std::vector<size_t> &prefixNote
+)
+{
+	const size_t n = valNote.listEncodeNoteSub.size();
+	const auto &sa = sahi.SuffArr;
+	const auto &lcp = sahi.HighArr;
+	std::vector<RepeatSubstring> results;
+
+	size_t i = 1;
+	while (i < n)
+	{
+		if (lcp[i] < L)
+		{
+			++i;
+			continue;
+		}
+		// 开始一个新组
+		std::vector<size_t> validPositions;
+		// 添加组内第一个
+		size_t pos0 = sa[i - 1];
+		if (pos0 + L <= n)
+		{
+			size_t noteCnt = prefixNote[pos0 + L] - prefixNote[pos0];
+			bool notAllBlank = (noteCnt >= 2);
+			size_t lastCode = valNote.listEncodeNoteSub[pos0 + L - 1];
+			bool notEndBlank = (valNote.listNoteSubMap[lastCode].enType != MyNoteSub::Type::Blank);
+			if (notAllBlank && notEndBlank)
+			{
+				validPositions.push_back(pos0);
+			}
+		}
+		// 扩展组内其他后缀
+		while (i < n && lcp[i] >= L)
+		{
+			size_t pos = sa[i];
+			if (pos + L <= n)
+			{
+				size_t noteCnt = prefixNote[pos + L] - prefixNote[pos];
+				bool notAllBlank = (noteCnt >= 2);
+				size_t lastCode = valNote.listEncodeNoteSub[pos + L - 1];
+				bool notEndBlank = (valNote.listNoteSubMap[lastCode].enType != MyNoteSub::Type::Blank);
+				if (notAllBlank && notEndBlank)
+				{
+					validPositions.push_back(pos);
+				}
+			}
+			++i;
+		}
+		if (validPositions.size() < 2) continue;
+
+		// 检查是否存在不重叠对（max - min >= L）
+		auto [minIt, maxIt] = std::minmax_element(validPositions.begin(), validPositions.end());
+		if (*maxIt - *minIt < L) continue;
+
+		// 贪心选取最多不重叠位置（已排序）
+		std::sort(validPositions.begin(), validPositions.end());
+		std::vector<size_t> selected;
+		size_t lastEnd = 0;
+		for (size_t pos : validPositions)
+		{
+			if (selected.empty() || pos >= lastEnd)
+			{
+				selected.push_back(pos);
+				lastEnd = pos + L;
+			}
+		}
+		if (selected.size() < 2) continue;
+
+		// 解码子串内容（取第一个有效位置）
+		std::vector<MyNoteSub> content;
+		content.reserve(L);
+		for (size_t j = 0; j < L; ++j)
+		{
+			size_t code = valNote.listEncodeNoteSub[validPositions[0] + j];
+			content.push_back(valNote.listNoteSubMap[code]);
+		}
+
+		results.push_back(RepeatSubstring{
+			.length = L,
+			.occurrences = std::move(selected),
+			.content = std::move(content)
+			});
+	}
+	return results;
+}
+
+// 对外接口：找出所有最长不重叠重复子串（符合音符约束）
+std::vector<RepeatSubstring> FindLongestNonOverlapRepeats(
+	const SAHI &sahi,
+	const NoteVal &valNote
+)
+{
+	const size_t n = valNote.listEncodeNoteSub.size();
+	if (n < 2) return {};
+
+	// 预处理前缀和：统计 Note 数量
+	std::vector<size_t> prefixNote(n + 1, 0);
+	for (size_t i = 0; i < n; ++i)
+	{
+		prefixNote[i + 1] = prefixNote[i];
+		const auto &sub = valNote.listNoteSubMap[valNote.listEncodeNoteSub[i]];
+		if (sub.enType == MyNoteSub::Type::Note)
+		{
+			prefixNote[i + 1]++;
+		}
+	}
+
+	// 二分查找最大可行长度
+	size_t lo = 2, hi = n, bestL = 0;
+	while (lo <= hi)
+	{
+		size_t mid = (lo + hi) / 2;
+		if (CheckLengthExists(mid, sahi, valNote, prefixNote))
+		{
+			bestL = mid;
+			lo = mid + 1;
+		}
+		else
+		{
+			hi = mid - 1;
+		}
+	}
+
+	if (bestL == 0) return {};
+
+	// 收集所有长度为 bestL 的重复子串
+	return CollectAllRepeatsOfLength(bestL, sahi, valNote, prefixNote);
+}
+
 
 
 int main(int argc, char *argv[]) try
@@ -540,67 +783,67 @@ int main(int argc, char *argv[]) try
 		it.Print();
 	}
 
-//	print("\n==========================================\n\n");
-//
-//	//拆分为排序序列，同tick音符合并，跨tick音符转为静音tick
-//	auto listNoteSub = ToMyNoteSubList(noteList);
-//	for (auto &it : listNoteSub)
-//	{
-//		it.Print();
-//	}
-//
-//	print("\n==========================================\n\n");
-//
-//	//后缀数组sa+LCP查找所有重复子串，使用贪心匹配最大不重叠子串集合，相似性匹配递归找变化子序列
-//	//根据集合完成重复序列收集
-//	//目前考虑算法先对完整组做一次，再对每个乐器分组做一次，最后分别输出
-//
-//	//首先，对每个音符、空白音符做唯一值ID映射，映射为一段连续的值域
-//	//通过unordered map进行查重和下标映射，vector对应下标存储具体音符值
-//	NoteVal valNote = ToNoteVal(listNoteSub);
-//
-//	//后缀数组：https://oi-wiki.org/string/sa/
-//	//SA-IS：https://www.luogu.com.cn/article/eugf8e8y
-//
-//	//先实现基础版本，后续再考虑是否优化SA-IS
-//
-//	//在这里，NoteVal存储离散化的双向映射
-//	//从0~valNote.listNoteSubMap.size()即为值域大小
-//	//根据值域选择使用的算法（较小使用基数计数排序，较大使用普通排序）
-//
-//	auto sahi = NoteValToSAHI(valNote);
-//
-//	auto listRepeatSubNote = RepeatSubNoteFinder::FindAll(valNote, sahi);
-//
-//	// 输出结果（解码后的实际内容）
-//	for (const auto &sub : listRepeatSubNote)
-//	{
-//		print("------------------------------------------\nsub length: [{}]\npos: ", sub.length);
-//		for (size_t pos : sub.occurrences)
-//		{
-//			print("[{}],", pos);
-//		}
-//		print("\n");
-//
-//		// 输出实际内容（解码）
-//		print("notes:\n");
-//		for (size_t j = sub.start; j < sub.start + sub.length; ++j)
-//		{
-//			size_t encodeVal = valNote.listEncodeNoteSub[j];
-//			const auto &note = valNote.listNoteSubMap[encodeVal];
-//			note.Print();
-//		}
-//		print("------------------------------------------\n\n");
-//	}
+	//	print("\n==========================================\n\n");
+	//
+	//	//拆分为排序序列，同tick音符合并，跨tick音符转为静音tick
+	//	auto listNoteSub = ToMyNoteSubList(noteList);
+	//	for (auto &it : listNoteSub)
+	//	{
+	//		it.Print();
+	//	}
+	//
+	//	print("\n==========================================\n\n");
+	//
+	//	//后缀数组sa+LCP查找所有重复子串，使用贪心匹配最大不重叠子串集合，相似性匹配递归找变化子序列
+	//	//根据集合完成重复序列收集
+	//	//目前考虑算法先对完整组做一次，再对每个乐器分组做一次，最后分别输出
+	//
+	//	//首先，对每个音符、空白音符做唯一值ID映射，映射为一段连续的值域
+	//	//通过unordered map进行查重和下标映射，vector对应下标存储具体音符值
+	//	NoteVal valNote = ToNoteVal(listNoteSub);
+	//
+	//	//后缀数组：https://oi-wiki.org/string/sa/
+	//	//SA-IS：https://www.luogu.com.cn/article/eugf8e8y
+	//
+	//	//先实现基础版本，后续再考虑是否优化SA-IS
+	//
+	//	//在这里，NoteVal存储离散化的双向映射
+	//	//从0~valNote.listNoteSubMap.size()即为值域大小
+	//	//根据值域选择使用的算法（较小使用基数计数排序，较大使用普通排序）
+	//
+	//	auto sahi = NoteValToSAHI(valNote);
+	//
+	//	auto listRepeatSubNote = RepeatSubNoteFinder::FindAll(valNote, sahi);
+	//
+	//	// 输出结果（解码后的实际内容）
+	//	for (const auto &sub : listRepeatSubNote)
+	//	{
+	//		print("------------------------------------------\nsub length: [{}]\npos: ", sub.length);
+	//		for (size_t pos : sub.occurrences)
+	//		{
+	//			print("[{}],", pos);
+	//		}
+	//		print("\n");
+	//
+	//		// 输出实际内容（解码）
+	//		print("notes:\n");
+	//		for (size_t j = sub.start; j < sub.start + sub.length; ++j)
+	//		{
+	//			size_t encodeVal = valNote.listEncodeNoteSub[j];
+	//			const auto &note = valNote.listNoteSubMap[encodeVal];
+	//			note.Print();
+	//		}
+	//		print("------------------------------------------\n\n");
+	//	}
 
-	//从音符列表挨个生成
+		//从音符列表挨个生成
 	auto mapInst = ToInstMap(noteList);
 	for (auto &it : mapInst)
 	{
 		auto listNoteSub = ToMyNoteSubList(it);
 		NoteVal valNote = ToNoteVal(listNoteSub);
 		auto sahi = NoteValToSAHI(valNote);
-		auto listRepeatSubNote = RepeatSubNoteFinder::FindAll(valNote, sahi);
+		auto listRepeatSubNote = FindLongestNonOverlapRepeats(sahi, valNote);
 
 		print("------------------------------------------\nInst: [{}], Count: [{}]\n", it.front().instrument, it.size());
 		// 输出结果（解码后的实际内容）
@@ -615,10 +858,8 @@ int main(int argc, char *argv[]) try
 
 			// 输出实际内容（解码）
 			print("notes:\n");
-			for (size_t j = sub.start; j < sub.start + sub.length; ++j)
+			for (auto &note : sub.content)
 			{
-				size_t encodeVal = valNote.listEncodeNoteSub[j];
-				const auto &note = valNote.listNoteSubMap[encodeVal];
 				note.Print();
 			}
 		}
