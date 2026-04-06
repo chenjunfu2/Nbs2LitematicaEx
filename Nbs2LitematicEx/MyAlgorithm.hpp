@@ -337,14 +337,6 @@ public:
 	SuffixAutomaton &operator=(SuffixAutomaton &&) = default;
 
 public:
-	void Reset(void)
-	{
-		listState.clear();
-		listState.shrink_to_fit();
-		szLastStateIndex = 0;
-		//szTotalStateIndex = 0;
-	}
-
 	const StateList &GetListState(void) const noexcept
 	{
 		return listState;
@@ -360,6 +352,22 @@ public:
 		return szLastStateIndex;
 	}
 
+	void Reset(void)
+	{
+		listState.clear();
+		szLastStateIndex = 0;
+		//szTotalStateIndex = 0;
+	}
+
+	void Init(void)
+	{
+		//重置
+		Reset();
+
+		//添加第0元素（根）
+		listState.emplace_back();
+	}
+
 	//从字符长度设置总状态数
 	void SetCharCount(size_t szCharCount)
 	{
@@ -370,19 +378,7 @@ public:
 		}
 	}
 
-	size_t AddFirstChar(T tFirstChar)
-	{
-		if (!listState.empty())
-		{
-			Reset();
-		}
-
-		//第0元素（根）
-		listState.emplace_back();
-		return AddNewChar(tFirstChar);
-	}
-
-	size_t AddNewChar(T tNewChar)
+	size_t AddNewChar(T tNewChar)//每次调用返回当前新的状态（也相当于上一个状态）
 	{
 		size_t szCurStateIndex = szLastStateIndex;
 		size_t szNewStateIndex = listState.size();
