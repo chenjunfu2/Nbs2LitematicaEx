@@ -2,70 +2,173 @@
 #include <stdio.h>
 #include <iostream>
 #include <string>
+#include <algorithm>
+#include <iomanip>
 
-using namespace std;
-int main()
+void printSAM(const SuffixAutomaton<unsigned char> &sam)
 {
-	string s;
-	std::getline(std::cin, s, '\n');
-
-	SuffixAutomaton<unsigned char> sam;
-	sam.SetCharCount(s.size());
-
-	vector<size_t> lastState(s.size());  // 记录每个前缀对应的状态索引
-
-	// 构建 SAM，同时记录每个 np
-	for (size_t i = 0; i < s.size(); i++)
-	{
-		lastState[i] = sam.AddNewChar(static_cast<unsigned char>(s[i] - 'a'));
-	}
-
 	const auto &states = sam.GetListState();
-	size_t tot = states.size();
 
-	// 外部 cnt 数组
-	vector<size_t> cnt(tot, 0);
+	std::cout << "========== Suffix Automaton Structure ==========\n";
+	std::cout << std::left;
+	std::cout << std::setw(10) << "State"
+		<< std::setw(10) << "len"
+		<< std::setw(10) << "link"
+		<< "transitions\n";
+	std::cout << std::string(60, '-') << "\n";
 
-	// 每个 np 出现次数 +1
-	for (size_t idx : lastState)
+	for (size_t i = 0; i < states.size(); i++)
 	{
-		cnt[idx]++;
+		std::cout << std::setw(10) << i
+			<< std::setw(10) << states[i].szEndposMaxStrLength
+			<< std::setw(10) << states[i].szSuffixLinkTreeIndex;
+
+		// 输出转移边
+		std::cout << "{";
+		bool first = true;
+		for (const auto &[ch, next] : states[i].mapTransitionNextIndex)
+		{
+			if (!first) std::cout << ", ";
+			std::cout << char(ch + 'a') << "->" << next;
+			first = false;
+		}
+		std::cout << "}\n";
 	}
 
-	// 基数排序（按 szLongestLen 从大到小）
-	vector<size_t> tax(tot + 1, 0);
-	vector<size_t> id(tot, 0);
-
-	for (size_t i = 0; i < tot; i++)
+	// 输出后缀链接树
+	std::cout << "\n========== Suffix Link Tree ==========\n";
+	for (size_t i = 0; i < states.size(); i++)
 	{
-		tax[states[i].szEndposMaxStrLength]++;
-	}
-	for (size_t i = 1; i <= tot; i++)
-	{
-		tax[i] += tax[i - 1];
-	}
-	for (size_t i = 0; i < tot; i++)
-	{
-		id[--tax[states[i].szEndposMaxStrLength]] = i;
+		size_t link = states[i].szSuffixLinkTreeIndex;
+		if (link != -1)
+		{
+			std::cout << i << " -> " << link << "\n";
+		}
+		else
+		{
+			std::cout << i << " -> (root)\n";
+		}
 	}
 
-	// 按长度从大到小遍历，累加 cnt 到后缀链接父节点
+	// 输出每个状态代表的子串
+	std::cout << "\n========== Substrings per State ==========\n";
+	for (size_t i = 0; i < states.size(); i++)
+	{
+		std::cout << "State " << i << " (len=" << states[i].szEndposMaxStrLength
+			<< "): ";
+
+		// 通过后缀链接找到最短长度
+		size_t minLen = 0;
+		size_t link = states[i].szSuffixLinkTreeIndex;
+		if (link != -1)
+		{
+			minLen = states[link].szEndposMaxStrLength + 1;
+		}
+		else
+		{
+			minLen = 1;
+		}
+
+		size_t maxLen = states[i].szEndposMaxStrLength;
+
+		if (minLen <= maxLen && minLen > 0)
+		{
+			std::cout << "子串长度范围 [" << minLen << ", " << maxLen << "]";
+		}
+		else if (i == 0)
+		{
+			std::cout << "空串";
+		}
+		else
+		{
+			std::cout << "长度 = " << maxLen;
+		}
+		std::cout << "\n";
+	}
+}
+
+
+int main(void)
+{
+	std::string s;
+	std::cin >> s;
+
+	// 初始化后缀自动机
+	SuffixAutomaton<unsigned char> sam;
+	sam.Init();
+	sam.SetCharCount(s.length());
+
+	// 构建SAM
+	for (char c : s)
+	{
+		sam.AddNewChar(static_cast<unsigned char>(c - 'a'));
+	}
+
+	printSAM(sam);
+	const auto &states = sam.GetListState();
+	size_t n = states.size();
+
+	// 统计每个状态的出现次数（endpos大小）
+	std::vector<size_t> cnt(n, 0);
+
+	// 每个状态的出现次数初始化为0
+	// 标记每个终止状态（即每次插入新字符时创建的最后一个状态）
+	// 实际上，每次AddNewChar返回的新状态就是当前整个字符串对应的状态
+	// 我们需要记录所有主链上的状态
+	std::vector<bool> isTerminal(n, false);
+
+	// 获取所有主链上的状态
+	size_t p = sam.GetLastStateIndex();
+	while (p != -1 && p < n)
+	{
+		isTerminal[p] = true;
+		if (states[p].szSuffixLinkTreeIndex >= n) break;
+		p = states[p].szSuffixLinkTreeIndex;
+	}
+
+	// 初始化计数：每个终止状态代表一个后缀，出现次数为1
+	for (size_t i = 0; i < n; i++)
+	{
+		if (isTerminal[i])
+		{
+			cnt[i] = 1;
+		}
+	}
+
+	// 按长度从大到小排序
+	std::vector<size_t> order(n);
+	for (size_t i = 0; i < n; i++)
+	{
+		order[i] = i;
+	}
+	std::sort(order.begin(), order.end(), [&](size_t a, size_t b)
+		{
+			return states[a].szEndposMaxStrLength > states[b].szEndposMaxStrLength;
+		});
+
+	// 沿着后缀链接累加出现次数
+	for (size_t i = 0; i < n; i++)
+	{
+		size_t u = order[i];
+		size_t link = states[u].szSuffixLinkTreeIndex;
+		if (link != -1 && link < n)
+		{
+			cnt[link] += cnt[u];
+		}
+	}
+
+	// 计算答案：出现次数>1的子串中，长度*出现次数的最大值
 	size_t ans = 0;
-	for (int i = tot - 1; i >= 0; i--)
-	{
-		size_t u = id[i];
-		size_t f = states[u].szSuffixLinkTreeIndex;
-		if (f != -1)
+	for (size_t i = 1; i < n; i++)
+	{ // 跳过根节点(状态0)
+		if (cnt[i] > 1)
 		{
-			cnt[f] += cnt[u];
-		}
-		if (cnt[u] > 1)
-		{
-			ans = max(ans, 1LL * cnt[u] * states[u].szEndposMaxStrLength);
+			ans = std::max(ans, cnt[i] * states[i].szEndposMaxStrLength);
 		}
 	}
 
-	printf("%lld\n", ans);
+	std::cout << ans << std::endl;
+
 	return 0;
 }
 
