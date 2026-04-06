@@ -5,6 +5,7 @@
 #include <string.h>
 #include <vector>
 #include <type_traits>
+#include <unordered_map>
 
 #ifdef DoublingCountingRadixSortSuffixArray_Debug
 #include <stdio.h>
@@ -290,3 +291,147 @@ ValueList<size_t> LcpHeightArray(const ValueList<T> &vInputArr, const ValueListP
 	
 	return vHeight;
 }
+
+/*
+SAM后缀自动机：有向无环图+后缀链接树
+有向无环图指明了所有的子串模式，后缀链接树指明了所有符合具有相同的endpos的集合
+遍历有向无环图获取子串，遍历后缀链接树获取具有更短长度的endpos集合（也就是上一节点是当前节点的子集，且共享更短的同一后缀）
+
+每个节点作为一个状态（State），每个状态同时作为两个数据结构的节点，
+其中next指明了当前节点的有向无环图的可迁移边，
+length指明了后缀链接树当前节点所代表的endpos集合中最长子串的长度，长度可用于检测约束条件
+suffixlink则是后缀链接树的父节点（用于反向遍历）
+
+构建SAM的时候，对于原始字符串，需要每次更新下一个字符，
+然后从上一SAM状态与新字符整体迁移到下一状态，
+存在3种情况：
+1.新加入的字符在当前自动机里，完全不存在，那么更新图和树的节点指向新字符节点
+2.新加入的字符在当前自动机里，已经存在一个现有的转移并且是一个新后缀，更新图并判断新节点应该在树的哪一个endpos集后面，使得新节点是原先节点的超集
+3.新加入的字符在当前自动机里，已经存在一个现有的转移，但不完全是现有集合的后缀，那么找出相同的后缀，拷贝原始节点并分裂出新后缀，向上依次更新所有指向原始节点的节点指向新分裂的节点，并将新字符作为分裂节点的超集
+*/
+template<typename T>//T是字符类型
+requires(std::is_integral_v<T> &&std::is_unsigned_v<T> && sizeof(T) <= sizeof(size_t))
+class SuffixAutomaton
+{
+public:
+	struct State
+	{
+		std::unordered_map<T, size_t> mapTransitionNextIndex{};//转移边: mapTransitionNextIndex[字符] = 到达的状态编号下标
+		size_t szEndposMaxStrLength = 0;	//该状态endpos集合中最长的子串长度
+		size_t szSuffixLinkTreeIndex = -1;	//当前节点在后缀链接树中的子集所在的状态下标（后缀链接树上一节点）
+	};
+
+	using StateList = std::vector<State>;
+
+private:
+	StateList listState;
+	//size_t szLastStateIndex = 0;//上一个处理的状态下标
+	//size_t szTotalStateIndex = 0;//状态总数（总是递增，用于分配新节点）
+
+public:
+	SuffixAutomaton(void) = default;
+	~SuffixAutomaton(void) = default;
+	SuffixAutomaton(const SuffixAutomaton &) = default;
+	SuffixAutomaton(SuffixAutomaton &&) = default;
+	SuffixAutomaton &operator=(const SuffixAutomaton &) = default;
+	SuffixAutomaton &operator=(SuffixAutomaton &&) = default;
+
+public:
+	void Reset(void)
+	{
+		listState.clear();
+		listState.shrink_to_fit();
+		//szLastStateIndex = 0;
+		//szTotalStateIndex = 0;
+	}
+
+	const StateList &GetListState(void) const noexcept
+	{
+		return listState;
+	}
+
+	StateList &&MoveListState(void) noexcept
+	{
+		return std::move(listState);
+	}
+
+	//从字符长度设置总状态数
+	void SetCharCount(size_t szCharCount)
+	{
+		size_t szStateCount = szCharCount * 2 - 1;
+		if (szStateCount > listState.size())
+		{
+			listState.reserve(szStateCount);
+		}
+	}
+
+	size_t AddNewChar(T tNewChar)
+	{
+		size_t szCurStateIndex = listState.size();
+		listState.emplace_back();//新增元素，下标刚好就是上一个size
+		
+		size_t szNewStateIndex = listState.size();
+		listState.emplace_back();//新增元素，下标刚好就是上一个size
+
+		//遍历后缀链接，给所有图上添加新转状态的转移
+		size_t szNextStateIndex = 0;
+		do
+		{
+			auto &stateCur = listState[szCurStateIndex];
+			//尝试添加
+			auto [it, b] = stateCur.mapTransitionNextIndex.try_emplace(tNewChar, szNewStateIndex);
+			if (b == false)//如果添加失败，则说明图当前节点已有相同字符的不同出边
+			{
+				szNextStateIndex = it->second;//获取阻止插入的节点下标
+				break;
+			}
+
+			//回溯节点
+			szCurStateIndex = stateCur.szSuffixLinkTreeIndex;
+		} while (szCurStateIndex != -1);
+
+		//如果while因为找到头部退出，那么此字符未出现过，为情况1，链接树然后离开
+		if (szCurStateIndex == -1)
+		{
+			listState[szNewStateIndex].szSuffixLinkTreeIndex = 0;//链接到根部
+			return szNewStateIndex;
+		}
+
+		//这里开始使用刚才阻止插入节点的下标szNextStateIndex
+		//如果阻止插入的已有转移的节点刚好是当前遍历节点+1，那么说明是连续状态，直接连接到阻止节点后
+		if (listState[szNextStateIndex].szEndposMaxStrLength ==
+			listState[szCurStateIndex].szEndposMaxStrLength + 1)
+		{
+			listState[szNewStateIndex].szSuffixLinkTreeIndex = szNextStateIndex;
+			return szNewStateIndex;
+		}
+
+		//否则进行节点拷贝与分裂
+		size_t szCloneStateIndex = listState.size();
+		++listState.emplace_back(listState[szNextStateIndex]).szEndposMaxStrLength;//从szNextStateIndex拷贝并新增元素，下标刚好就是上一个size，
+		//接上一行注释：并顺手递增endpos集合长度（多1个字符）
+
+		//让下一个状态和新状态都指向拷贝状态，这样树就把被克隆的原来的节点分离出来
+		listState[szNextStateIndex].szSuffixLinkTreeIndex = szCloneStateIndex;
+		listState[szNewStateIndex].szSuffixLinkTreeIndex = szCloneStateIndex;
+
+		//最后把之前指向szNextStateIndex的全部移动到szCloneStateIndex
+		do
+		{
+			auto &stateCur = listState[szCurStateIndex];
+
+			//查找所有还指向szNextStateIndex的改成szCloneStateIndex
+			auto it = stateCur.mapTransitionNextIndex.find(tNewChar);
+			if (it != stateCur.mapTransitionNextIndex.end() &&
+				it->second == szNextStateIndex)
+			{
+				it->second = szCloneStateIndex;
+			}
+
+			//回溯节点
+			szCurStateIndex = stateCur.szSuffixLinkTreeIndex;
+		} while (szCurStateIndex != -1);
+
+		return szNewStateIndex;
+	}
+};
