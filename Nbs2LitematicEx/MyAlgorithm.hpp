@@ -383,7 +383,15 @@ public:
 		size_t szCurStateIndex = szLastStateIndex;
 		size_t szNewStateIndex = listState.size();
 		szLastStateIndex = szNewStateIndex;
-		listState.emplace_back();//新增元素，下标刚好就是上一个size
+		listState.emplace_back
+		(
+			State
+			{
+				.mapTransitionNextIndex{},
+				.szEndposMaxStrLength = listState[szCurStateIndex].szEndposMaxStrLength + 1,
+				.szSuffixLinkTreeIndex = (size_t)-1,
+			}
+		);//新增元素，下标刚好就是上一个size
 
 		//遍历后缀链接，给所有图上添加新转状态的转移
 		size_t szNextStateIndex = 0;
@@ -420,9 +428,15 @@ public:
 
 		//否则进行节点拷贝与分裂
 		size_t szCloneStateIndex = listState.size();
-		auto &stateClone = listState.emplace_back(listState[szNextStateIndex]);//从szNextStateIndex拷贝并新增元素，下标刚好就是上一个size，
-		//设置拷贝节点的长度为当前+1
-		stateClone.szEndposMaxStrLength = listState[szCurStateIndex].szEndposMaxStrLength + 1;
+		listState.emplace_back
+		(
+			State
+			{
+				.mapTransitionNextIndex = listState[szNextStateIndex].mapTransitionNextIndex,//从被克隆的节点拷贝数据
+				.szEndposMaxStrLength = listState[szCurStateIndex].szEndposMaxStrLength + 1,//设置长度为当前状态而非克隆节点数据
+				.szSuffixLinkTreeIndex = listState[szNextStateIndex].szSuffixLinkTreeIndex,//从被克隆的节点拷贝数据
+			}
+		);//从szNextStateIndex拷贝并新增元素，下标刚好就是上一个size，
 
 		//让下一个状态和新状态都指向拷贝状态，这样树就把被克隆的原来的节点分离出来
 		listState[szNextStateIndex].szSuffixLinkTreeIndex = szCloneStateIndex;
