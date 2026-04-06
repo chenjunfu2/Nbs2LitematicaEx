@@ -1,4 +1,5 @@
-﻿#include "../Nbs2LitematicEx/MyAlgorithm.hpp"
+﻿/*
+#include "../Nbs2LitematicEx/MyAlgorithm.hpp"
 #include <stdio.h>
 #include <iostream>
 #include <string>
@@ -200,3 +201,217 @@ int main2(void)
 	putchar('\n');
 	return 0;
 }
+*/
+
+
+
+#include <iostream>
+#include <type_traits>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <cstdint>
+#include <unordered_map>
+#include <vector>
+
+template<typename T> // T 是字符类型，必须是无符号整型且 sizeof(T) <= sizeof(size_t)
+requires(std::is_integral_v<T> &&std::is_unsigned_v<T> && sizeof(T) <= sizeof(size_t))
+class SuffixAutomaton
+{
+public:
+	struct State
+	{
+		std::unordered_map<T, size_t> mapTransitionNextIndex{};
+		size_t szEndposMaxStrLength = 0;
+		size_t szSuffixLinkTreeIndex = -1;
+	};
+
+	using StateList = std::vector<State>;
+
+private:
+	StateList listState;
+	size_t szLastStateIndex = 0;
+
+public:
+	SuffixAutomaton(void) = default;
+	~SuffixAutomaton(void) = default;
+	SuffixAutomaton(const SuffixAutomaton &) = default;
+	SuffixAutomaton(SuffixAutomaton &&) = default;
+	SuffixAutomaton &operator=(const SuffixAutomaton &) = default;
+	SuffixAutomaton &operator=(SuffixAutomaton &&) = default;
+
+public:
+	const StateList &GetListState(void) const noexcept
+	{
+		return listState;
+	}
+
+	StateList &&MoveListState(void) noexcept
+	{
+		return std::move(listState);
+	}
+
+	size_t GetLastStateIndex(void) const noexcept
+	{
+		return szLastStateIndex;
+	}
+
+	void Reset(void)
+	{
+		listState.clear();
+		szLastStateIndex = 0;
+	}
+
+	void Init(void)
+	{
+		Reset();
+		listState.emplace_back();
+	}
+
+	void SetCharCount(size_t szCharCount)
+	{
+		size_t szStateCount = szCharCount * 2 - 1;
+		if (szStateCount > listState.size())
+		{
+			listState.reserve(szStateCount);
+		}
+	}
+
+	size_t AddNewChar(T tNewChar)
+	{
+		size_t szCurStateIndex = szLastStateIndex;
+		size_t szNewStateIndex = listState.size();
+		szLastStateIndex = szNewStateIndex;
+		listState.emplace_back(
+			State{
+				.mapTransitionNextIndex{},
+				.szEndposMaxStrLength = listState[szCurStateIndex].szEndposMaxStrLength + 1,
+				.szSuffixLinkTreeIndex = (size_t)-1,
+			});
+
+		size_t szNextStateIndex = 0;
+		do
+		{
+			auto &stateCur = listState[szCurStateIndex];
+			auto [it, b] = stateCur.mapTransitionNextIndex.try_emplace(tNewChar, szNewStateIndex);
+			if (b == false)
+			{
+				szNextStateIndex = it->second;
+				break;
+			}
+			szCurStateIndex = stateCur.szSuffixLinkTreeIndex;
+		} while (szCurStateIndex != -1);
+
+		if (szCurStateIndex == -1)
+		{
+			listState[szNewStateIndex].szSuffixLinkTreeIndex = 0;
+			return szNewStateIndex;
+		}
+
+		if (listState[szNextStateIndex].szEndposMaxStrLength ==
+			listState[szCurStateIndex].szEndposMaxStrLength + 1)
+		{
+			listState[szNewStateIndex].szSuffixLinkTreeIndex = szNextStateIndex;
+			return szNewStateIndex;
+		}
+
+		size_t szCloneStateIndex = listState.size();
+		listState.emplace_back(
+			State{
+				.mapTransitionNextIndex = listState[szNextStateIndex].mapTransitionNextIndex,
+				.szEndposMaxStrLength = listState[szCurStateIndex].szEndposMaxStrLength + 1,
+				.szSuffixLinkTreeIndex = listState[szNextStateIndex].szSuffixLinkTreeIndex,
+			});
+
+		listState[szNextStateIndex].szSuffixLinkTreeIndex = szCloneStateIndex;
+		listState[szNewStateIndex].szSuffixLinkTreeIndex = szCloneStateIndex;
+
+		do
+		{
+			auto &stateCur = listState[szCurStateIndex];
+			auto it = stateCur.mapTransitionNextIndex.find(tNewChar);
+			if (it != stateCur.mapTransitionNextIndex.end() &&
+				it->second == szNextStateIndex)
+			{
+				it->second = szCloneStateIndex;
+			}
+			szCurStateIndex = stateCur.szSuffixLinkTreeIndex;
+		} while (szCurStateIndex != -1);
+
+		return szNewStateIndex;
+	}
+};
+
+int main()
+{
+	std::ios::sync_with_stdio(false);
+	std::cin.tie(nullptr);
+
+	std::string s;
+	std::cin >> s;
+
+	using CharType = unsigned char;
+	SuffixAutomaton<CharType> sam;
+	sam.Init();
+	sam.SetCharCount(s.size());
+
+	std::vector<size_t> new_state_indices;
+	new_state_indices.reserve(s.size());
+
+	for (char c : s)
+	{
+		size_t idx = sam.AddNewChar(static_cast<CharType>(c));
+		new_state_indices.push_back(idx);
+	}
+
+	const auto &states = sam.GetListState();
+	size_t state_num = states.size();
+	std::vector<size_t> occurrence(state_num, 0);
+
+	// 非克隆节点（每次添加字符产生的新节点）初始出现次数为 1
+	for (size_t idx : new_state_indices)
+	{
+		occurrence[idx] = 1;
+	}
+
+	// 桶排序，按 len 降序
+	size_t max_len = s.size();
+	std::vector<std::vector<size_t>> buckets(max_len + 1);
+	for (size_t i = 0; i < state_num; ++i)
+	{
+		buckets[states[i].szEndposMaxStrLength].push_back(i);
+	}
+	std::vector<size_t> order;
+	order.reserve(state_num);
+	for (size_t len = max_len; len > 0; --len)
+	{
+		for (size_t idx : buckets[len])
+		{
+			order.push_back(idx);
+		}
+	}
+
+	// 沿后缀链接累加出现次数
+	for (size_t v : order)
+	{
+		size_t link = states[v].szSuffixLinkTreeIndex;
+		if (link != static_cast<size_t>(-1))
+		{
+			occurrence[link] += occurrence[v];
+		}
+	}
+
+	long long ans = 0;
+	for (size_t i = 0; i < state_num; ++i)
+	{
+		if (occurrence[i] > 1)
+		{
+			long long val = static_cast<long long>(occurrence[i]) * states[i].szEndposMaxStrLength;
+			if (val > ans) ans = val;
+		}
+	}
+
+	std::cout << ans << std::endl;
+	return 0;
+}
+
