@@ -420,8 +420,9 @@ public:
 
 		//否则进行节点拷贝与分裂
 		size_t szCloneStateIndex = listState.size();
-		++listState.emplace_back(listState[szNextStateIndex]).szEndposMaxStrLength;//从szNextStateIndex拷贝并新增元素，下标刚好就是上一个size，
-		//接上一行注释：并顺手递增endpos集合长度（多1个字符）
+		auto &stateClone = listState.emplace_back(listState[szNextStateIndex]);//从szNextStateIndex拷贝并新增元素，下标刚好就是上一个size，
+		//设置拷贝节点的长度为当前+1
+		stateClone.szEndposMaxStrLength = listState[szCurStateIndex].szEndposMaxStrLength + 1;
 
 		//让下一个状态和新状态都指向拷贝状态，这样树就把被克隆的原来的节点分离出来
 		listState[szNextStateIndex].szSuffixLinkTreeIndex = szCloneStateIndex;
