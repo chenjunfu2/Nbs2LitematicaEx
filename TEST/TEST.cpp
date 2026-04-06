@@ -33,8 +33,8 @@ int main()
 	}
 
 	// 基数排序（按 szLongestLen 从大到小）
-	vector<int> tax(tot + 1, 0);
-	vector<int> id(tot, 0);
+	vector<size_t> tax(tot + 1, 0);
+	vector<size_t> id(tot, 0);
 
 	for (size_t i = 0; i < tot; i++)
 	{

@@ -325,8 +325,8 @@ public:
 
 private:
 	StateList listState;
-	//size_t szLastStateIndex = 0;//上一个处理的状态下标
-	//size_t szTotalStateIndex = 0;//状态总数（总是递增，用于分配新节点）
+	size_t szLastStateIndex = 0;//上一个处理的状态下标
+	//size_t szTotalStateIndex = 0;//状态总数（总是递增，用于分配新节点，事实上listState已有，节约一个变量）
 
 public:
 	SuffixAutomaton(void) = default;
@@ -341,7 +341,7 @@ public:
 	{
 		listState.clear();
 		listState.shrink_to_fit();
-		//szLastStateIndex = 0;
+		szLastStateIndex = 0;
 		//szTotalStateIndex = 0;
 	}
 
@@ -355,6 +355,11 @@ public:
 		return std::move(listState);
 	}
 
+	size_t GetLastStateIndex(void) const noexcept
+	{
+		return szLastStateIndex;
+	}
+
 	//从字符长度设置总状态数
 	void SetCharCount(size_t szCharCount)
 	{
@@ -365,12 +370,23 @@ public:
 		}
 	}
 
+	size_t AddFirstChar(T tFirstChar)
+	{
+		if (!listState.empty())
+		{
+			Reset();
+		}
+
+		//第0元素（根）
+		listState.emplace_back();
+		return AddNewChar(tFirstChar);
+	}
+
 	size_t AddNewChar(T tNewChar)
 	{
-		size_t szCurStateIndex = listState.size();
-		listState.emplace_back();//新增元素，下标刚好就是上一个size
-		
+		size_t szCurStateIndex = szLastStateIndex;
 		size_t szNewStateIndex = listState.size();
+		szLastStateIndex = szNewStateIndex;
 		listState.emplace_back();//新增元素，下标刚好就是上一个size
 
 		//遍历后缀链接，给所有图上添加新转状态的转移
