@@ -310,7 +310,7 @@ suffixlink则是后缀链接树的父节点（用于反向遍历）
 3.新加入的字符在当前自动机里，已经存在一个现有的转移，但不完全是现有集合的后缀，那么找出相同的后缀，拷贝原始节点并分裂出新后缀，向上依次更新所有指向原始节点的节点指向新分裂的节点，并将新字符作为分裂节点的超集
 */
 template<typename T>//T是字符类型
-requires(std::is_integral_v<T> &&std::is_unsigned_v<T> && sizeof(T) <= sizeof(size_t))
+requires(std::is_integral_v<T> && std::is_unsigned_v<T> && sizeof(T) <= sizeof(size_t))
 class SuffixAutomaton
 {
 public:
