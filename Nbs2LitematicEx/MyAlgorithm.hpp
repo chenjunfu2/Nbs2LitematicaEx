@@ -322,11 +322,18 @@ public:
 	};
 
 	using StateList = std::vector<State>;
+	using IndexList = std::vector<size_t>;
+
+	struct Data
+	{
+		size_t szLastStateIndex;//上一个处理的状态下标
+		//size_t szTotalStateIndex;//状态总数（总是递增，用于分配新节点，事实上listState已有，节约一个变量）
+		StateList listState;//状态列表
+		IndexList listStateIndexOfChar;//每个字符插入后的对应状态
+	};
 
 private:
-	StateList listState;
-	size_t szLastStateIndex = 0;//上一个处理的状态下标
-	//size_t szTotalStateIndex = 0;//状态总数（总是递增，用于分配新节点，事实上listState已有，节约一个变量）
+	Data data;//状态机数据
 
 public:
 	SuffixAutomaton(void) = default;
@@ -337,26 +344,22 @@ public:
 	SuffixAutomaton &operator=(SuffixAutomaton &&) = default;
 
 public:
-	const StateList &GetListState(void) const noexcept
+	const Data &GetData(void) const noexcept
 	{
-		return listState;
+		return data;
 	}
 
-	StateList &&MoveListState(void) noexcept
+	Data &&MoveData(void) noexcept
 	{
-		return std::move(listState);
-	}
-
-	size_t GetLastStateIndex(void) const noexcept
-	{
-		return szLastStateIndex;
+		return std::move(data);
 	}
 
 	void Reset(void)
 	{
-		listState.clear();
-		szLastStateIndex = 0;
+		data.szLastStateIndex = 0;
 		//szTotalStateIndex = 0;
+		data.listState.clear();
+		data.listStateIndexOfChar.clear();
 	}
 
 	void Init(void)
@@ -365,39 +368,45 @@ public:
 		Reset();
 
 		//添加第0元素（根）
-		listState.emplace_back();
+		data.listState.emplace_back();
 	}
 
 	//从字符长度设置总状态数
 	void SetCharCount(size_t szCharCount)
 	{
 		size_t szStateCount = szCharCount * 2 - 1;
-		if (szStateCount > listState.size())
+		if (szStateCount > data.listState.size())
 		{
-			listState.reserve(szStateCount);
+			data.listState.reserve(szStateCount);
+		}
+
+		if (szCharCount > data.listStateIndexOfChar.size())
+		{
+			data.listStateIndexOfChar.reserve(szCharCount);
 		}
 	}
 
-	size_t AddNewChar(T tNewChar)//每次调用返回当前新的状态（也相当于上一个状态）
+	void AddNewChar(T tNewChar)//每次调用返回当前新的状态（也相当于上一个状态）
 	{
-		size_t szCurStateIndex = szLastStateIndex;
-		size_t szNewStateIndex = listState.size();
-		szLastStateIndex = szNewStateIndex;
-		listState.emplace_back
+		size_t szCurStateIndex = data.szLastStateIndex;
+		size_t szNewStateIndex = data.listState.size();
+		data.szLastStateIndex = szNewStateIndex;
+		data.listState.emplace_back
 		(
 			State
 			{
 				.mapTransitionNextIndex{},
-				.szEndposMaxStrLength = listState[szCurStateIndex].szEndposMaxStrLength + 1,
+				.szEndposMaxStrLength = data.listState[szCurStateIndex].szEndposMaxStrLength + 1,
 				.szSuffixLinkTreeIndex = (size_t)-1,
 			}
 		);//新增元素，下标刚好就是上一个size
+		data.listStateIndexOfChar.push_back(szNewStateIndex);//设置新增元素的下标
 
 		//遍历后缀链接，给所有图上添加新转状态的转移
 		size_t szNextStateIndex = 0;
 		do
 		{
-			auto &stateCur = listState[szCurStateIndex];
+			auto &stateCur = data.listState[szCurStateIndex];
 			//尝试添加
 			auto [it, b] = stateCur.mapTransitionNextIndex.try_emplace(tNewChar, szNewStateIndex);
 			if (b == false)//如果添加失败，则说明图当前节点已有相同字符的不同出边
@@ -413,39 +422,39 @@ public:
 		//如果while因为找到头部退出，那么此字符未出现过，为情况1，链接树然后离开
 		if (szCurStateIndex == -1)
 		{
-			listState[szNewStateIndex].szSuffixLinkTreeIndex = 0;//链接到根部
-			return szNewStateIndex;
+			data.listState[szNewStateIndex].szSuffixLinkTreeIndex = 0;//链接到根部
+			return;
 		}
 
 		//这里开始使用刚才阻止插入节点的下标szNextStateIndex
 		//如果阻止插入的已有转移的节点刚好是当前遍历节点+1，那么说明是连续状态，直接连接到阻止节点后
-		if (listState[szNextStateIndex].szEndposMaxStrLength ==
-			listState[szCurStateIndex].szEndposMaxStrLength + 1)
+		if (data.listState[szNextStateIndex].szEndposMaxStrLength ==
+			data.listState[szCurStateIndex].szEndposMaxStrLength + 1)
 		{
-			listState[szNewStateIndex].szSuffixLinkTreeIndex = szNextStateIndex;
-			return szNewStateIndex;
+			data.listState[szNewStateIndex].szSuffixLinkTreeIndex = szNextStateIndex;
+			return;
 		}
 
 		//否则进行节点拷贝与分裂
-		size_t szCloneStateIndex = listState.size();
-		listState.emplace_back
+		size_t szCloneStateIndex = data.listState.size();
+		data.listState.emplace_back
 		(
 			State
 			{
-				.mapTransitionNextIndex = listState[szNextStateIndex].mapTransitionNextIndex,//从被克隆的节点拷贝数据
-				.szEndposMaxStrLength = listState[szCurStateIndex].szEndposMaxStrLength + 1,//设置长度为当前状态而非克隆节点数据
-				.szSuffixLinkTreeIndex = listState[szNextStateIndex].szSuffixLinkTreeIndex,//从被克隆的节点拷贝数据
+				.mapTransitionNextIndex = data.listState[szNextStateIndex].mapTransitionNextIndex,//从被克隆的节点拷贝数据
+				.szEndposMaxStrLength = data.listState[szCurStateIndex].szEndposMaxStrLength + 1,//设置长度为当前状态而非克隆节点数据
+				.szSuffixLinkTreeIndex = data.listState[szNextStateIndex].szSuffixLinkTreeIndex,//从被克隆的节点拷贝数据
 			}
 		);//从szNextStateIndex拷贝并新增元素，下标刚好就是上一个size，
 
 		//让下一个状态和新状态都指向拷贝状态，这样树就把被克隆的原来的节点分离出来
-		listState[szNextStateIndex].szSuffixLinkTreeIndex = szCloneStateIndex;
-		listState[szNewStateIndex].szSuffixLinkTreeIndex = szCloneStateIndex;
+		data.listState[szNextStateIndex].szSuffixLinkTreeIndex = szCloneStateIndex;
+		data.listState[szNewStateIndex].szSuffixLinkTreeIndex = szCloneStateIndex;
 
 		//最后把之前指向szNextStateIndex的全部移动到szCloneStateIndex
 		do
 		{
-			auto &stateCur = listState[szCurStateIndex];
+			auto &stateCur = data.listState[szCurStateIndex];
 
 			//查找所有还指向szNextStateIndex的改成szCloneStateIndex
 			auto it = stateCur.mapTransitionNextIndex.find(tNewChar);
@@ -459,6 +468,6 @@ public:
 			szCurStateIndex = stateCur.szSuffixLinkTreeIndex;
 		} while (szCurStateIndex != -1);
 
-		return szNewStateIndex;
+		return;
 	}
 };
