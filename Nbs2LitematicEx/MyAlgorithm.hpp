@@ -513,6 +513,4 @@ public:
 		
 		return listOccCount;
 	}
-
-
 };
