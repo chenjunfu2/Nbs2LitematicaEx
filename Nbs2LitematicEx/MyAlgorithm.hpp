@@ -332,6 +332,7 @@ public:
 
 	using StateList = std::vector<State>;
 	using IndexList = std::vector<size_t>;
+	using CountList = std::vector<size_t>;
 
 	struct Data
 	{
@@ -480,10 +481,11 @@ public:
 		return;
 	}
 
-	static IndexList CountOccurrences(const Data &data)
+	//返回值listOccCount[szStateIndex] = 该状态代表的子串在全文中的出现次数
+	static CountList CountOccurrences(const Data &data)
 	{
 		//初始化：每个终止状态次数 = 1
-		IndexList listOccCount(data.listState.size(), 0);//初始化填0
+		CountList listOccCount(data.listState.size(), 0);//初始化填0
 		for (const auto &szCharIndex : data.listStateIndexOfChar)
 		{
 			listOccCount[szCharIndex] = 1;//字符状态为1
