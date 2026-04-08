@@ -5,6 +5,9 @@
 #include <stdint.h>
 #include <string.h>
 #include <vector>
+#include <ranges>
+#include <algorithm>
+#include <numeric>
 #include <type_traits>
 #include <unordered_map>
 
@@ -476,4 +479,38 @@ public:
 
 		return;
 	}
+
+	static IndexList CountOccurrences(const Data &data)
+	{
+		//初始化：每个终止状态次数 = 1
+		IndexList listOccCount(data.listState.size(), 0);//初始化填0
+		for (const auto &szCharIndex : data.listStateIndexOfChar)
+		{
+			listOccCount[szCharIndex] = 1;//字符状态为1
+		}
+
+		//按长度降序排序（长的先处理）
+		IndexList listOrderIndex(data.listState.size());
+		std::iota(listOrderIndex.begin(), listOrderIndex.end(), 0);
+		std::ranges::sort(listOrderIndex,
+			[&](const size_t &l, const size_t &r) -> bool
+			{
+				return data.listState[l].szEndposMaxStrLength > data.listState[r].szEndposMaxStrLength;
+			}
+		);
+
+		//累加到后缀链接父节点
+		for (const auto &szOrderIndex : listOrderIndex)
+		{
+			const auto &szTreeIndex = data.listState[szOrderIndex].szSuffixLinkTreeIndex;
+			if (szTreeIndex != -1)
+			{
+				listOccCount[szTreeIndex] += listOccCount[szOrderIndex];
+			}
+		}
+		
+		return listOccCount;
+	}
+
+
 };
