@@ -204,7 +204,7 @@ int main2(void)
 */
 
 
-
+/*
 #include <iostream>
 #include <type_traits>
 #include <string>
@@ -284,6 +284,97 @@ int main()
 	}
 
 	std::cout << ans << std::endl;
+	return 0;
+}
+*/
+
+
+#include "..\Nbs2LitematicEx\MyAlgorithm.hpp"
+#include "..\Dependencies\nbt_cpp\NBT_Print.hpp"
+#include "..\Dependencies\util\MyAssert.hpp"
+#include <stdio.h>
+#include <vector>
+#include <stdint.h>
+#include <ctype.h>
+#include <format>
+#include <cmath>
+
+template<typename... Args>
+void print(std::format_string<Args...> fmt, Args&&... args)
+{
+	std::string output = std::format(fmt, std::forward<Args>(args)...);
+	fwrite(output.data(), 1, output.size(), stdout);
+}
+
+template<typename... Args>
+void printerr(std::format_string<Args...> fmt, Args&&... args)
+{
+	std::string output = std::format(fmt, std::forward<Args>(args)...);
+	fwrite(output.data(), 1, output.size(), stderr);
+}
+
+int main(void)
+{
+	std::vector<uint8_t> vInput;
+
+re_try:
+	print("> ");
+	vInput.clear();
+	bool bSkip = false;
+	int iGet;
+	while ((iGet = getchar()) != EOF && (char)iGet != '\n')
+	{
+		if (bSkip)
+		{
+			continue;
+		}
+
+		if (isspace(iGet))
+		{
+			continue;
+		}
+
+		if (iGet < '0' || iGet > '9')
+		{
+			print("Only pure numeric input is accepted!\n");
+			bSkip = true;
+			continue;
+		}
+
+		vInput.emplace_back((uint8_t)(unsigned int)iGet - '0');//0~9 num
+	}
+
+	if (bSkip)
+	{
+		goto re_try;
+	}
+
+	//读取完成，进行计算
+	auto sa_rk = SuffixArray::DoublingCountingRadixSortSuffixArray(10, vInput);
+	auto lcph = SuffixArray::LcpHeightArray(vInput, sa_rk);
+
+	MyAssert(sa_rk.vSuffixArray.size() == sa_rk.vRank.size());
+	MyAssert(sa_rk.vSuffixArray.size() == lcph.size());
+
+	//根据sa_rk输出sa，一行一个
+	size_t szSize = sa_rk.vSuffixArray.size();
+	size_t szZeroPerfCount = (size_t)std::log10l((long double)szSize) + 1;
+	print("size: {}\n", szSize);
+
+	print("[{:<{}}] ({:<{}} - {:<{}}): {:<{}}\n", "i", szZeroPerfCount, "SA", szZeroPerfCount, "Hi", szZeroPerfCount, "Suffix", szZeroPerfCount);
+	for (size_t i = 0; i < szSize; ++i)
+	{
+		const auto &itSA = sa_rk.vSuffixArray[i];
+		const auto &itHI = lcph[i];
+
+		print("[{:0{}}] ({:0{}} - {:0{}}): ", i, szZeroPerfCount, itSA, szZeroPerfCount, itHI, szZeroPerfCount);
+		for (size_t i = itSA; i < szSize; ++i)
+		{
+			putchar('0' + vInput[i]);
+		}
+		putchar('\n');
+	}
+
 	return 0;
 }
 
