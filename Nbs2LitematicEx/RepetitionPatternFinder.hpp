@@ -219,7 +219,6 @@ public:
 								.end_pos = r,
 								.length = cand.len,
 								.valid_length = cand.valid_len,
-								.occurrence_count = cand.occur_cnt,
 								.score = cand.score,
 							}
 						);
@@ -240,7 +239,6 @@ public:
 						.end_pos = cand.start_pos + cand.len - 1,
 						.length = cand.len,
 						.valid_length = cand.valid_len,
-						.occurrence_count = cand.occur_cnt,
 						.score = cand.score,
 					}
 				);
