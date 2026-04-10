@@ -99,7 +99,7 @@ private:
 	{
 
 		std::vector<size_t> poses;
-		for (size_t rk = rank_left; rk <= rank_right + 1; ++rk)
+		for (size_t rk = rank_left; rk <= rank_right; ++rk)
 		{
 			poses.push_back(sa[rk]);
 		}
