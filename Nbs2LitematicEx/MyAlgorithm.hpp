@@ -299,6 +299,9 @@ public:
 		
 		return vHeight;
 	}
+
+#undef PRINT_INF
+#undef PRINT_ARR
 };
 
 /*
