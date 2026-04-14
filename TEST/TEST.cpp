@@ -290,6 +290,8 @@ int main()
 
 
 #include "..\Nbs2LitematicEx\MyAlgorithm.hpp"
+#include "..\Nbs2LitematicEx\OptimalSubstringSelector.hpp"
+
 #include "..\Dependencies\nbt_cpp\NBT_Print.hpp"
 #include "..\Dependencies\util\MyAssert.hpp"
 #include <stdio.h>
@@ -313,6 +315,39 @@ void printerr(std::format_string<Args...> fmt, Args&&... args)
 	fwrite(output.data(), 1, output.size(), stderr);
 }
 
+uint8_t InputMapToIndex(uint8_t i)
+{
+	if (i >= '0' && i <= '9')
+	{
+		return i - (uint8_t)'0' + 0;//0~9 num --> 0-based (count 10)
+	}
+	else if (i >= 'a' && i <= 'z')
+	{
+		return i - (uint8_t)'a' + 10;//a~z alpha --> 10-based (count 26)
+	}
+	else
+	{
+		return (uint8_t)-1;
+	}
+}
+
+uint8_t IndexMapToOutput(uint8_t i)
+{
+	if (i >= 0 && i <= 9)
+	{
+		return i - 0 + (uint8_t)'0';//0~9 num --> 0-based (count 10)
+	}
+	else if (i >= 10 && i <= 36)
+	{
+		return i - 10 + (uint8_t)'a';//a~z alpha --> 10-based (count 26)
+	}
+	else
+	{
+		return (uint8_t)-1;
+	}
+}
+
+
 int main(void)
 {
 	std::vector<uint8_t> vInput;
@@ -334,14 +369,16 @@ re_try:
 			continue;
 		}
 
-		if (iGet < '0' || iGet > '9')
+		if (auto u8Map = InputMapToIndex((uint8_t)iGet); u8Map != (uint8_t)-1)
 		{
-			print("Only pure numeric input is accepted!\n");
+			vInput.emplace_back(u8Map);
+		}
+		else
+		{
+			print("Only pure numbers and lowercase letters are accepted as input!\n");
 			bSkip = true;
 			continue;
 		}
-
-		vInput.emplace_back((uint8_t)(unsigned int)iGet - '0');//0~9 num
 	}
 
 	if (bSkip)
@@ -350,7 +387,7 @@ re_try:
 	}
 
 	//读取完成，进行计算
-	auto sa_rk = SuffixArray::DoublingCountingRadixSortSuffixArray(10, vInput);
+	auto sa_rk = SuffixArray::DoublingCountingRadixSortSuffixArray(10 + 26, vInput);
 	auto lcph = SuffixArray::LcpHeightArray(vInput, sa_rk);
 
 	MyAssert(sa_rk.vSuffixArray.size() == sa_rk.vRank.size());
@@ -370,8 +407,49 @@ re_try:
 		print("[{:0{}}] ({:0{}} - {:0{}}): ", i, szZeroPerfCount, itSA, szZeroPerfCount, itHI, szZeroPerfCount);
 		for (size_t i = itSA; i < szSize; ++i)
 		{
-			putchar('0' + vInput[i]);
+			putchar((uint32_t)IndexMapToOutput(vInput[i]));
 		}
+		putchar('\n');
+	}
+
+	//配置参数
+	OptimalSubstringSelector<uint8_t>::SelectorConfig config{};
+	config.szMinLength = 2;           // k=2: 长度必须 > 2
+	config.szMinFrequency = 2;        // n=2: 出现次数必须 >= 2
+
+	// 权衡策略：长度 * 频次 (倾向于选长且重复多的)
+	config.fnWeightCalculator = [](size_t len, size_t freq) -> double
+	{
+		return len * freq;
+	};
+
+	config.fnIsInvalidEndingChar = [](uint8_t ch) -> bool
+	{
+		return ch < 10;  // 映射后 0~9 代表数字
+	};
+
+	config.fnIsInvalidEndingChar =
+	[](uint8_t ch) -> bool
+	{
+		return ch < 10;
+	};
+
+	//执行选择
+	auto result = OptimalSubstringSelector<uint8_t>::Select(vInput, config);
+
+	//输出结果
+	printf("\nTotal Count: %zu\n---------------------------\n", result.vIntervals.size());
+
+	for (const auto &s : result.vIntervals)
+	{
+		size_t szSize = s.szEnd - s.szStart + 1;
+		print("Count: [{}], Beg: [{}], Size: [{}]\nStr: ", s.szFrequency, s.szStart, szSize);
+
+		for (size_t i = 0; i < szSize; ++i)
+		{
+			putchar((uint32_t)IndexMapToOutput(vInput[s.szStart + i]));
+		}
+
 		putchar('\n');
 	}
 
