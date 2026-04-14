@@ -290,6 +290,7 @@ int main()
 
 
 #include "..\Nbs2LitematicEx\MyAlgorithm.hpp"
+#define DEBUG_MINING
 #include "..\Nbs2LitematicEx\OptimalSubstringSelector.hpp"
 
 #include "..\Dependencies\nbt_cpp\NBT_Print.hpp"
@@ -420,7 +421,7 @@ re_try:
 	// 权衡策略：长度 * 频次 (倾向于选长且重复多的)
 	config.fnWeightCalculator = [](size_t len, size_t freq) -> double
 	{
-		return len * 2 * freq;
+		return len * len * freq;
 	};
 
 	config.fnIsInvalidEndingChar = [](uint8_t ch) -> bool
@@ -428,7 +429,7 @@ re_try:
 		return ch < 10;  // 映射后 0~9 代表数字
 	};
 
-	config.fnIsInvalidEndingChar =
+	config.fnIsInvalidStartingChar =
 	[](uint8_t ch) -> bool
 	{
 		return ch < 10;

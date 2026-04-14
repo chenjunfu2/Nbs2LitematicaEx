@@ -190,11 +190,9 @@ private:
 		for (size_t len = k + 1; len <= N; ++len)
 		{
 			// 在 SA 上滑动窗口，寻找 height >= len 的连续段
-			size_t L = 0;
-			while (L < N)
+			for (size_t L = 0, R = 0; L < N; L = R + 1, R = L)
 			{
 				// 寻找满足条件的右边界 R
-				size_t R = L;
 				while (R + 1 < N && heightArr[R + 1] >= len)
 				{
 					++R;
@@ -218,7 +216,6 @@ private:
 						if (endPos < N) pat.vEndPositions.push_back(endPos);
 					}
 
-
 					// 若长串仅由基础短串重复构成（不含额外字符），则丢弃长串
 					// 依赖基础短串参与后续 DP，DP 会自动通过多次选择短串实现全局最优
 					size_t firstStartPos = pat.vEndPositions[0] - pat.szLength + 1;
@@ -239,9 +236,33 @@ private:
 						patterns.push_back(std::move(pat));
 					}
 				}
-				L = R + 1;
 			}
 		}
+
+		// [调试] 打印候选模式详情
+#ifdef DEBUG_MINING
+		for (const auto &pat : patterns)
+		{
+			fprintf(stderr, "[CANDIDATE] len=%zu, freq=%zu, ends=[",
+				pat.szLength, pat.szFrequency);
+			for (size_t i = 0; i < std::min(pat.vEndPositions.size(), size_t(10)); ++i)
+			{
+				fprintf(stderr, "%zu,", pat.vEndPositions[i]);
+			}
+			if (pat.vEndPositions.size() > 10) fprintf(stderr, "...");
+			fprintf(stderr, "]\n");
+
+			// 打印模式内容（前 30 字符）
+			size_t startPos = pat.vEndPositions[0] - pat.szLength + 1;
+			fprintf(stderr, "  Content: ");
+			for (size_t i = 0; i < std::min(pat.szLength, size_t(30)); ++i)
+			{
+				fprintf(stderr, "%d ", vInputArr[startPos + i]);
+			}
+			fprintf(stderr, "%s\n", pat.szLength > 30 ? "..." : "");
+		}
+#endif
+
 		return patterns;
 	}
 
