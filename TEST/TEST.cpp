@@ -386,31 +386,31 @@ re_try:
 		goto re_try;
 	}
 
-	//读取完成，进行计算
-	auto sa_rk = SuffixArray::DoublingCountingRadixSortSuffixArray(10 + 26, vInput);
-	auto lcph = SuffixArray::LcpHeightArray(vInput, sa_rk);
-
-	MyAssert(sa_rk.vSuffixArray.size() == sa_rk.vRank.size());
-	MyAssert(sa_rk.vSuffixArray.size() == lcph.size());
-
-	//根据sa_rk输出sa，一行一个
-	size_t szSize = sa_rk.vSuffixArray.size();
-	size_t szZeroPerfCount = (size_t)std::log10l((long double)szSize) + 1;
-	print("size: {}\n", szSize);
-
-	print("[{:<{}}] ({:<{}} - {:<{}}): {:<{}}\n", "i", szZeroPerfCount, "SA", szZeroPerfCount, "Hi", szZeroPerfCount, "Suffix", szZeroPerfCount);
-	for (size_t i = 0; i < szSize; ++i)
-	{
-		const auto &itSA = sa_rk.vSuffixArray[i];
-		const auto &itHI = lcph[i];
-
-		print("[{:0{}}] ({:0{}} - {:0{}}): ", i, szZeroPerfCount, itSA, szZeroPerfCount, itHI, szZeroPerfCount);
-		for (size_t i = itSA; i < szSize; ++i)
-		{
-			putchar((uint32_t)IndexMapToOutput(vInput[i]));
-		}
-		putchar('\n');
-	}
+//	//读取完成，进行计算
+//	auto sa_rk = SuffixArray::DoublingCountingRadixSortSuffixArray(10 + 26, vInput);
+//	auto lcph = SuffixArray::LcpHeightArray(vInput, sa_rk);
+//
+//	MyAssert(sa_rk.vSuffixArray.size() == sa_rk.vRank.size());
+//	MyAssert(sa_rk.vSuffixArray.size() == lcph.size());
+//
+//	//根据sa_rk输出sa，一行一个
+//	size_t szSize = sa_rk.vSuffixArray.size();
+//	size_t szZeroPerfCount = (size_t)std::log10l((long double)szSize) + 1;
+//	print("size: {}\n", szSize);
+//
+//	print("[{:<{}}] ({:<{}} - {:<{}}): {:<{}}\n", "i", szZeroPerfCount, "SA", szZeroPerfCount, "Hi", szZeroPerfCount, "Suffix", szZeroPerfCount);
+//	for (size_t i = 0; i < szSize; ++i)
+//	{
+//		const auto &itSA = sa_rk.vSuffixArray[i];
+//		const auto &itHI = lcph[i];
+//
+//		print("[{:0{}}] ({:0{}} - {:0{}}): ", i, szZeroPerfCount, itSA, szZeroPerfCount, itHI, szZeroPerfCount);
+//		for (size_t i = itSA; i < szSize; ++i)
+//		{
+//			putchar((uint32_t)IndexMapToOutput(vInput[i]));
+//		}
+//		putchar('\n');
+//	}
 
 	//配置参数
 	OptimalSubstringSelector<uint8_t>::SelectorConfig config{};
@@ -420,7 +420,7 @@ re_try:
 	// 权衡策略：长度 * 频次 (倾向于选长且重复多的)
 	config.fnWeightCalculator = [](size_t len, size_t freq) -> double
 	{
-		return len * freq;
+		return len * 2 * freq;
 	};
 
 	config.fnIsInvalidEndingChar = [](uint8_t ch) -> bool
