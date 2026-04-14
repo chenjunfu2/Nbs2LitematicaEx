@@ -125,6 +125,41 @@ private:
 	// ================= 算法实现细节 =================
 
 	/**
+	 * @brief 辅助函数：计算子串的最小周期长度 (基于 KMP 的 Pi/Next 数组)
+	 *
+	 * @param vArr 原始输入数组
+	 * @param start 子串起始位置
+	 * @param length 子串长度
+	 * @return 最小周期长度。若子串非纯重复构成，则返回原长度
+	 *
+	 * 原理：利用 KMP 前缀函数 pi[len-1]，若 len % (len - pi[len-1]) == 0，
+	 * 则最小周期为 len - pi[len-1]，时间复杂度 O(L)
+	 */
+	static size_t ComputeMinimalPeriodLength(const std::vector<T> &vArr, size_t start, size_t length)
+	{
+		if (length <= 1) return length;
+
+		// 使用局部 vector 记录 Pi 数组，实际工程中可改为静态缓冲区复用以提升极致性能
+		std::vector<size_t> pi(length, 0);
+		for (size_t i = 1, j = 0; i < length; ++i)
+		{
+			while (j > 0 && vArr[start + i] != vArr[start + j])
+			{
+				j = pi[j - 1];
+			}
+			if (vArr[start + i] == vArr[start + j])
+			{
+				++j;
+			}
+			pi[i] = j;
+		}
+
+		size_t period = length - pi[length - 1];
+		// 判断是否为纯重复串：总长度必须能被周期整除
+		return (length % period == 0) ? period : length;
+	}
+
+	/**
 	 * @brief [Step 1] 利用 SuffixArray + Height 挖掘候选模式
 	 *
 	 * 原理：
@@ -181,6 +216,20 @@ private:
 						size_t startPos = sa[i];
 						size_t endPos = startPos + len - 1;
 						if (endPos < N) pat.vEndPositions.push_back(endPos);
+					}
+
+
+					// 若长串仅由基础短串重复构成（不含额外字符），则丢弃长串
+					// 依赖基础短串参与后续 DP，DP 会自动通过多次选择短串实现全局最优
+					size_t firstStartPos = pat.vEndPositions[0] - pat.szLength + 1;
+					size_t minPeriodLen = ComputeMinimalPeriodLength(vInputArr, firstStartPos, pat.szLength);
+
+					// 仅当 周期长度 < 原长度 且 重复次数 >= 2 时，判定为纯重复长串
+					if (minPeriodLen < pat.szLength && (pat.szLength / minPeriodLen) >= 2)
+					{
+						// 丢弃该长串候选，不加入 patterns 列表
+						// 基础短串会在枚举更小 length 时被独立捕获，且频次更高
+						continue;
 					}
 
 					// 简单去重：如果该模式完全被之前找到的更长模式覆盖且位置相同，可跳过
