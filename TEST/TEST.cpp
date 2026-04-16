@@ -388,7 +388,7 @@ re_try:
 		return 0;
 	}
 
-	if (bSkip)
+	if (bSkip || vInput.empty())
 	{
 		goto re_try;
 	}
