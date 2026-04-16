@@ -417,6 +417,7 @@ re_try:
 	}
 
 #define REP_SUBSTR_MIN_LENGTH 3
+#define REP_SUBSTR_MIN_COUNT 3
 
 	auto rep = SuffixArray::AggregateMaximalRepeats(sa_rk.vSuffixArray, lcph, REP_SUBSTR_MIN_LENGTH);
 
@@ -615,43 +616,96 @@ re_try:
 	
 	
 	//判断区间是否出现碰撞，是返回true否则false
-	auto SectionCollision =
+	auto IsSectionCollision =
 	[&FindSection](const std::vector<Section> &vGreedyOccupiedArray, const Section &sec) -> bool
 	{
 		//二分查找，vGreedyOccupiedArray使用区间起始进行排序，且保证区间末尾至少小等于下一个区间起始（左闭右开保证区间末尾无法取到）
-		auto szFindIt = FindSection(vGreedyOccupiedArray, sec.szBeg);
+		auto itFind = FindSection(vGreedyOccupiedArray, sec.szBeg);//找到第一个后向元素
 
-		if (szFindIt == vGreedyOccupiedArray.end())
+		//如果是头部，那么没有前向判断，否则判断前向区间
+		if (itFind != vGreedyOccupiedArray.begin())
 		{
-
+			auto itForward = itFind - 1;
+			if (sec.szBeg < itForward->szEnd)//可以等于（因为可取，如果小于则区间碰撞）
+			{
+				return true;
+			}
 		}
 
+		//如果是末尾，那么没有后向判断，否则判断后向区间
+		if (itFind != vGreedyOccupiedArray.end())//当前Find其实就是后向位置（第一个大于前向begin的元素）
+		{
+			const auto &itBackward = itFind;
+			if (sec.szEnd > itBackward->szBeg)//可以等于（因为可取）
+			{
+				return true;
+			}
+		}
 
-	
-
-		
-
-
-
+		//都未碰撞，返回false
+		return false;
 	};
 
 
+	//此api调用需要保证：先进性过碰撞判断，确保无碰撞再插入，否则行为未定义
+	auto InsertSection =
+	[&FindSection]<typename T>(std::vector<Section> &vGreedyOccupiedArray, T &&sec) -> std::vector<Section>::iterator
+	{
+		//二分查找，vGreedyOccupiedArray使用区间起始进行排序，且保证区间末尾至少小等于下一个区间起始（左闭右开保证区间末尾无法取到）
+		auto itFind = FindSection(vGreedyOccupiedArray, sec.szBeg);//找到第一个后向元素
+
+		//在后向元素之前插入区间
+		return vGreedyOccupiedArray.insert(itFind, std::forward<T>(sec));
+	};
 
 	//进行贪心抢占
 	//对于每个家族来说，首先遍历家族成员，在区间抢占排序列表查找碰撞
 	//如果出现碰撞则淘汰对应元素，并在临时列表中保留未碰撞的元素，
 	//如果最终保留元素的数量至少大于要求K次，那么家族符合贪心要求
 	//加入占座列表并抢占空位，然后处理下一家族
-	for (auto &it : newRep)
+
+	//在这里，newRep以按照贪心筛选规则进行排序，按序遍历并依次贪心即可获取目标结果
+	std::vector<Section> vTempIndexList;//用于临时保存符合要求的家族成员范围，可复用
+	SuffixArray::RepeatFragmentList newGreedyRep;//贪心结果
+	for (const auto &it : newRep)
 	{
+		vTempIndexList.clear();//清空
+		for (const auto &it2 : it.vStartIndices)
+		{
+			Section newSec{ .szBeg = it2, .szEnd = it2 + it.szPrefixLength };
 
+			//碰撞，跳过
+			if (IsSectionCollision(vGreedyOccupiedArray, newSec))
+			{
+				continue;
+			}
 
+			vTempIndexList.push_back(std::move(newSec));//仅保留未碰撞
+		}
 
+		//现在已经筛选出未碰撞的所有成员，检测剩余成员数量是否符合要求
+		if (vTempIndexList.size() < REP_SUBSTR_MIN_COUNT)
+		{
+			continue;//跳过（删除整个家族）
+		}
 
+		//否则保留家族
+		//先插入长度
+		auto &vNewStartIndices = newGreedyRep.emplace_back(it.szPrefixLength, SuffixArray::ValueList<size_t>{}).vStartIndices;
+		vNewStartIndices.reserve(vTempIndexList.size());//提前扩容
 
-
-
+		//成功，那么依序插入原始列表
+		for (auto &it2 : vTempIndexList)
+		{
+			vNewStartIndices.emplace_back(it2.szBeg);//这里的big就是刚才初始化的it.vStartIndices元素
+			InsertSection(vGreedyOccupiedArray, std::move(it2));//移动转移所有权
+		}
 	}
+
+	//贪心完成，newGreedyRep存储所需内容
+
+
+
 
 
 	//字符串完美周期性检测与字符串单一字符组成检测
