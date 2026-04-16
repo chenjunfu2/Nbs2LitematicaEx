@@ -457,12 +457,13 @@ re_try:
 		{
 			continue;
 		}
-
+		
 		size_t szFrontBlankLength = 0;
 		size_t szBackBlankLength = 0;
+		size_t szFirstSubStrStart = it.vStartIndices.front();
 
 		//只取其中一个重复序列判断（因为都一样，取第一即可）
-		for (size_t i = it.vStartIndices.front(), end = i + it.szPrefixLength; i < end; ++i)
+		for (size_t i = szFirstSubStrStart, end = i + it.szPrefixLength; i < end; ++i)
 		{
 			if (vInput[i] < 10)//0~9是数字，模拟空白
 			{
@@ -475,7 +476,7 @@ re_try:
 		}
 
 		//判断尾部
-		for (size_t end = it.vStartIndices.front() + szFrontBlankLength + 1, i = end + it.szPrefixLength; i > end; --i)//从头部空白后作为结束点
+		for (size_t end = szFirstSubStrStart + szFrontBlankLength + 1, i = szFirstSubStrStart + it.szPrefixLength; i > end; --i)//从头部空白后作为结束点
 		{
 			if (vInput[i - 1] < 10)//0~9是数字，模拟空白
 			{
