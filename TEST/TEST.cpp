@@ -564,7 +564,16 @@ re_try:
 		it.vStartIndices = std::move(vNewStartIndices);
 	}
 
-	//std::vector<size_t> vGreedyArray(0, );//0填充
+
+	//区间
+	struct Pos
+	{
+		size_t szBeg;
+		size_t szEnd;
+	};
+	std::vector<Pos> vGreedyArray;
+
+	//使用区间二分进行贪心占座
 
 
 
