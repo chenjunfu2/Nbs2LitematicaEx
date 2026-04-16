@@ -417,7 +417,7 @@ re_try:
 
 	auto rep = SuffixArray::AggregateMaximalRepeats(sa_rk.vSuffixArray, lcph, REP_SUBSTR_MIN_LENGTH);
 
-	auto repPrint = [](const SuffixArray::RepeatFragmentList &rep) -> void
+	auto repPrint = [](const SuffixArray::RepeatFragmentList &rep, const auto &vInput) -> void
 	{
 		print("size: {}\n", rep.size());
 
@@ -443,7 +443,7 @@ re_try:
 		}
 	};
 
-	repPrint(rep);
+	repPrint(rep, vInput);
 
 	//去首尾空白（数字模拟）
 	//先去尾部，再去头部，效率更高
@@ -521,7 +521,7 @@ re_try:
 		}
 	}
 
-	repPrint(newRep);
+	repPrint(newRep, vInput);
 
 	//贪心查找不重叠集合
 
