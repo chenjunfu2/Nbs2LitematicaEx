@@ -411,6 +411,32 @@ re_try:
 		putchar('\n');
 	}
 
+	print("=========================================\n");
+
+	auto rep = SuffixArray::AggregateMaximalRepeats(sa_rk.vSuffixArray, lcph, 3);
+	print("size: {}\n", rep.size());
+
+	for (auto &it : rep)
+	{
+		print("len: [{}]\nstart index: ", it.szPrefixLength);
+		for (auto &it : it.vStartIndices)
+		{
+			print("[{}], ", it);
+		}
+
+		print("\nval:");
+		if (it.vStartIndices.empty())
+		{
+			print("[NULL]\n");
+			continue;
+		}
+		for (size_t i = it.vStartIndices.front(), end = i + it.szPrefixLength; i < end; ++i)
+		{
+			putchar((uint32_t)IndexMapToOutput(vInput[i]));
+		}
+		putchar('\n');
+	}
+
 	return 0;
 }
 
