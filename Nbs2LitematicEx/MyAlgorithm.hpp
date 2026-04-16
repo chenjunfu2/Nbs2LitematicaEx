@@ -306,9 +306,7 @@ public:
 		return vHeight;
 	}
 
-	template<typename T>
-	requires(std::is_integral_v<T> &&std::is_unsigned_v<T> && sizeof(T) <= sizeof(size_t))
-	static std::vector<RepeatFragment> AggregateMaximalRepeats(const std::vector<T> &vSuffixArray, const std::vector<size_t> &vLcpHeight, size_t szMinLength)
+	static std::vector<RepeatFragment> AggregateMaximalRepeats(const std::vector<size_t> &vSuffixArray, const std::vector<size_t> &vLcpHeight, size_t szMinLength)
 	{
 		std::vector<RepeatFragment> vRepeatFragment;
 		size_t szLcpLength = vLcpHeight.size();
