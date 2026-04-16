@@ -50,7 +50,7 @@ public:
 	struct RepeatFragment
 	{
 		size_t szPrefixLength;
-		std::vector<size_t> vStartIndices;
+		ValueList<size_t> vStartIndices;
 	};
 
 	using RepeatFragmentList = std::vector<RepeatFragment>;

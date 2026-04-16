@@ -527,6 +527,45 @@ re_try:
 	repPrint(newRep, vInput);
 
 	//贪心查找不重叠集合
+	//对于每一个家族（小集合）内部的多个重复序列，先进行一次顺序贪心（集合本身需要按照索引顺序排序）
+	//内部贪心因为是定长关系，可以直接根据起始索引差小于长度，直接排除重叠且不需要的子序列
+	//然后对每个家族之间的重复序列进行全量长度排序，再进行一次完整的贪心，求出最终的不重叠循环串集合
+	//对于最终的全量家族之间的贪心来说，如果某个家族因为被其它家族挤占生存空间而完全淘汰，
+	//那么应该回滚贪心数组中被淘汰家族占用的位置以便其它家族抢占
+
+	for (auto &it : newRep)
+	{
+		if (it.vStartIndices.size() < 2)//至少2个元素才有筛选必要
+		{
+			continue;
+		}
+
+		std::ranges::sort(it.vStartIndices, std::less<>());//索引升序
+
+		//预分配贪心筛选结果数组
+		std::vector<size_t> vNewStartIndices;
+		vNewStartIndices.reserve(it.vStartIndices.size());
+
+		size_t szLastIndex = it.vStartIndices.front();//贪心起始选择开头
+		for (size_t i = 1; i < it.vStartIndices.size(); ++i)//从第二个开始比较
+		{
+			auto &szCurIndex = it.vStartIndices[i];
+
+			if (szCurIndex - szLastIndex >= it.szPrefixLength)
+			{
+				szLastIndex = szCurIndex;
+				vNewStartIndices.emplace_back(szCurIndex);
+			}
+			//else //跳过
+			//{}
+		}
+
+		//替换回去
+		it.vStartIndices = std::move(vNewStartIndices);
+	}
+
+	//std::vector<size_t> vGreedyArray(0, );//0填充
+
 
 
 
