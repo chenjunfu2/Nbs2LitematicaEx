@@ -418,13 +418,13 @@ re_try:
 
 	for (auto &it : rep)
 	{
-		print("len: [{}]\nstart index: ", it.szPrefixLength);
+		print("start index: ");
 		for (auto &it : it.vStartIndices)
 		{
 			print("[{}], ", it);
 		}
 
-		print("\nval:");
+		print("\nval({}):", it.szPrefixLength);
 		if (it.vStartIndices.empty())
 		{
 			print("[NULL]\n");
