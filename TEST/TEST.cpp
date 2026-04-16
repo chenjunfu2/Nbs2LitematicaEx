@@ -411,14 +411,13 @@ re_try:
 		putchar('\n');
 	}
 
-	print("=========================================\n");
-
 #define REP_SUBSTR_MIN_LENGTH 3
 
 	auto rep = SuffixArray::AggregateMaximalRepeats(sa_rk.vSuffixArray, lcph, REP_SUBSTR_MIN_LENGTH);
 
 	auto repPrint = [](const SuffixArray::RepeatFragmentList &rep, const auto &vInput) -> void
 	{
+		print("=========================================\n");
 		print("size: {}\n", rep.size());
 
 		for (const auto &it : rep)
