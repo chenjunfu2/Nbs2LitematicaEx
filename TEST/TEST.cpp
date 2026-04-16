@@ -299,6 +299,8 @@ int main()
 #include <ctype.h>
 #include <format>
 #include <cmath>
+#include <algorithm>
+#include <ranges>
 
 template<typename... Args>
 void print(std::format_string<Args...> fmt, Args&&... args)
@@ -565,20 +567,91 @@ re_try:
 	}
 
 
-	//区间
-	struct Pos
+	//区间（左闭右开）
+	struct Section
 	{
-		size_t szBeg;
-		size_t szEnd;
+		size_t szBeg;//包含
+		size_t szEnd;//不包含
 	};
-	std::vector<Pos> vGreedyArray;
+	std::vector<Section> vGreedyOccupiedArray;//区间抢占排序列表
 
 	//使用区间二分进行贪心占座
+	//首先按照L*k -> K -> L降序排序家族
+
+	std::ranges::sort(newRep,
+		[](const SuffixArray::RepeatFragment &l, const SuffixArray::RepeatFragment &r)-> bool
+		{
+			size_t szLeftWeight = l.szPrefixLength * l.vStartIndices.size();
+			size_t szRightWeight = r.szPrefixLength * r.vStartIndices.size();
+
+			if (auto cmp = szLeftWeight <=> szRightWeight; cmp != 0)
+			{
+				return cmp < 0;
+			}
+			else if (auto cmp = l.vStartIndices.size() <=> r.vStartIndices.size(); cmp != 0)
+			{
+				return cmp < 0;
+			}
+			else
+			{
+				return l.szPrefixLength < r.szPrefixLength;
+			}
+		}
+	);
+
+	
+	//查找第一个区间起始下标，如果找不到，那么返回值为(size_t)-1
+	auto FindSection =
+	[]<typename T>(T & vGreedyOccupiedArray, size_t szSecStart)->std::conditional_t<std::is_const_v<T>, std::vector<Section>::const_iterator, std::vector<Section>::iterator>
+	requires(std::is_same_v<std::remove_cv_t<T>, std::vector<Section>>)
+	{
+		return std::upper_bound(vGreedyOccupiedArray.begin(), vGreedyOccupiedArray.end(), szSecStart,
+			[](size_t szSecStart, const Section &info)->bool
+			{
+				return szSecStart < info.szBeg;
+			}
+		);
+	};
+	
+	
+	//判断区间是否出现碰撞，是返回true否则false
+	auto SectionCollision =
+	[&FindSection](const std::vector<Section> &vGreedyOccupiedArray, const Section &sec) -> bool
+	{
+		//二分查找，vGreedyOccupiedArray使用区间起始进行排序，且保证区间末尾至少小等于下一个区间起始（左闭右开保证区间末尾无法取到）
+		auto szFindIt = FindSection(vGreedyOccupiedArray, sec.szBeg);
+
+		if (szFindIt == vGreedyOccupiedArray.end())
+		{
+
+		}
+
+
+	
+
+		
+
+
+
+	};
+
+
+
+	//进行贪心抢占
+	//对于每个家族来说，首先遍历家族成员，在区间抢占排序列表查找碰撞
+	//如果出现碰撞则淘汰对应元素，并在临时列表中保留未碰撞的元素，
+	//如果最终保留元素的数量至少大于要求K次，那么家族符合贪心要求
+	//加入占座列表并抢占空位，然后处理下一家族
+	for (auto &it : newRep)
+	{
 
 
 
 
 
+
+
+	}
 
 
 	//字符串完美周期性检测与字符串单一字符组成检测
