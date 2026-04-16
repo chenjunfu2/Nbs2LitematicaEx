@@ -619,7 +619,7 @@ re_try:
 	
 	//查找第一个区间起始下标
 	auto FindSection =
-	[]<typename T>(T &vGreedyOccupiedArray, size_t szSecStart)->std::conditional_t<std::is_const_v<T>, std::vector<Section>::const_iterator, std::vector<Section>::iterator>
+	[]<typename T>(T &vGreedyOccupiedArray, size_t szSecStart) -> std::conditional_t<std::is_const_v<T>, std::vector<Section>::const_iterator, std::vector<Section>::iterator>
 	requires(std::is_same_v<std::remove_cv_t<T>, std::vector<Section>>)
 	{
 		return std::upper_bound(vGreedyOccupiedArray.begin(), vGreedyOccupiedArray.end(), szSecStart,
