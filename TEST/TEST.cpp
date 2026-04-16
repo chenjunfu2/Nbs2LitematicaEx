@@ -432,7 +432,7 @@ re_try:
 
 		for (const auto &it : rep)
 		{
-			print("start index: ");
+			print("start index({}): ", it.vStartIndices.size());
 			for (const auto &it : it.vStartIndices)
 			{
 				print("[{}], ", it);
