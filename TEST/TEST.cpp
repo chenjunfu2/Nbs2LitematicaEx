@@ -535,7 +535,7 @@ re_try:
 	//然后对每个家族之间的重复序列进行全量长度排序，再进行一次完整的贪心，求出最终的不重叠循环串集合
 	//对于最终的全量家族之间的贪心来说，如果某个家族因为被其它家族挤占生存空间而完全淘汰，
 	//那么应该回滚贪心数组中被淘汰家族占用的位置以便其它家族抢占
-
+	SuffixArray::RepeatFragmentList newGreedyRepPrep;//贪心结果
 	for (auto &it : newRep)
 	{
 		if (it.vStartIndices.size() < 2)//至少2个元素才有筛选必要
@@ -563,9 +563,17 @@ re_try:
 			//{}
 		}
 
-		//替换回去
-		it.vStartIndices = std::move(vNewStartIndices);
+		//检测剩余数量是否符合要求
+		if (vNewStartIndices.size() < REP_SUBSTR_MIN_COUNT)
+		{
+			continue;//不符合要求，去除
+		}
+
+		//否则插入
+		newGreedyRepPrep.emplace_back(it.szPrefixLength, std::move(vNewStartIndices));
 	}
+
+	repPrint(newGreedyRepPrep, vInput, "[Greedy algorithm preprocessing]");
 
 
 	//区间（左闭右开）
@@ -579,7 +587,7 @@ re_try:
 	//使用区间二分进行贪心占座
 	//首先按照L*k -> K -> L降序排序家族
 
-	std::ranges::sort(newRep,
+	std::ranges::sort(newGreedyRepPrep,
 		[](const SuffixArray::RepeatFragment &l, const SuffixArray::RepeatFragment &r)-> bool
 		{
 			size_t szLeftWeight = l.szPrefixLength * l.vStartIndices.size();
@@ -664,10 +672,10 @@ re_try:
 	//如果最终保留元素的数量至少大于要求K次，那么家族符合贪心要求
 	//加入占座列表并抢占空位，然后处理下一家族
 
-	//在这里，newRep以按照贪心筛选规则进行排序，按序遍历并依次贪心即可获取目标结果
+	//在这里，newGreedyRepPrep以按照贪心筛选规则进行排序，按序遍历并依次贪心即可获取目标结果
 	std::vector<Section> vTempIndexList;//用于临时保存符合要求的家族成员范围，可复用
 	SuffixArray::RepeatFragmentList newGreedyRep;//贪心结果
-	for (const auto &it : newRep)
+	for (const auto &it : newGreedyRepPrep)
 	{
 		vTempIndexList.clear();//清空
 		for (const auto &it2 : it.vStartIndices)
