@@ -53,6 +53,8 @@ public:
 		std::vector<size_t> vStartIndices;
 	};
 
+	using RepeatFragmentList = std::vector<RepeatFragment>;
+
 public:
 	//返回值为排序在vSortArr中的下标，所以是size_t
 	template<typename T>
@@ -306,9 +308,9 @@ public:
 		return vHeight;
 	}
 
-	static std::vector<RepeatFragment> AggregateMaximalRepeats(const std::vector<size_t> &vSuffixArray, const std::vector<size_t> &vLcpHeight, size_t szMinLength)
+	static RepeatFragmentList AggregateMaximalRepeats(const std::vector<size_t> &vSuffixArray, const std::vector<size_t> &vLcpHeight, size_t szMinLength)
 	{
-		std::vector<RepeatFragment> vRepeatFragment;
+		RepeatFragmentList vRepeatFragment;
 		size_t szLcpLength = vLcpHeight.size();
 
 		//LCP数组长度等于序列长度N，且lcp[0]==0
