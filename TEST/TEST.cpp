@@ -351,6 +351,7 @@ int main(void)
 {
 	std::vector<uint8_t> vInput;
 
+main_start:
 re_try:
 	print("> ");
 	vInput.clear();
@@ -384,6 +385,8 @@ re_try:
 	{
 		goto re_try;
 	}
+
+	print("=========================================\n");
 
 	//读取完成，进行计算
 	auto sa_rk = SuffixArray::DoublingCountingRadixSortSuffixArray(10 + 26, vInput);
@@ -533,8 +536,8 @@ re_try:
 
 
 
-
-
+	print("=========================================\n");
+	goto main_start;
 
 	return 0;
 }
