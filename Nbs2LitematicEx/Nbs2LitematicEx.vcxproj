@@ -151,8 +151,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MyAlgorithm.hpp" />
-    <ClInclude Include="OptimalSubstringSelector.hpp" />
-    <ClInclude Include="RepetitionPatternFinder.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

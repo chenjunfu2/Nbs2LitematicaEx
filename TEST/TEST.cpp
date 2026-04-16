@@ -290,8 +290,6 @@ int main()
 
 
 #include "..\Nbs2LitematicEx\MyAlgorithm.hpp"
-#define DEBUG_MINING
-#include "..\Nbs2LitematicEx\OptimalSubstringSelector.hpp"
 
 #include "..\Dependencies\nbt_cpp\NBT_Print.hpp"
 #include "..\Dependencies\util\MyAssert.hpp"
@@ -387,70 +385,29 @@ re_try:
 		goto re_try;
 	}
 
-//	//读取完成，进行计算
-//	auto sa_rk = SuffixArray::DoublingCountingRadixSortSuffixArray(10 + 26, vInput);
-//	auto lcph = SuffixArray::LcpHeightArray(vInput, sa_rk);
-//
-//	MyAssert(sa_rk.vSuffixArray.size() == sa_rk.vRank.size());
-//	MyAssert(sa_rk.vSuffixArray.size() == lcph.size());
-//
-//	//根据sa_rk输出sa，一行一个
-//	size_t szSize = sa_rk.vSuffixArray.size();
-//	size_t szZeroPerfCount = (size_t)std::log10l((long double)szSize) + 1;
-//	print("size: {}\n", szSize);
-//
-//	print("[{:<{}}] ({:<{}} - {:<{}}): {:<{}}\n", "i", szZeroPerfCount, "SA", szZeroPerfCount, "Hi", szZeroPerfCount, "Suffix", szZeroPerfCount);
-//	for (size_t i = 0; i < szSize; ++i)
-//	{
-//		const auto &itSA = sa_rk.vSuffixArray[i];
-//		const auto &itHI = lcph[i];
-//
-//		print("[{:0{}}] ({:0{}} - {:0{}}): ", i, szZeroPerfCount, itSA, szZeroPerfCount, itHI, szZeroPerfCount);
-//		for (size_t i = itSA; i < szSize; ++i)
-//		{
-//			putchar((uint32_t)IndexMapToOutput(vInput[i]));
-//		}
-//		putchar('\n');
-//	}
+	//读取完成，进行计算
+	auto sa_rk = SuffixArray::DoublingCountingRadixSortSuffixArray(10 + 26, vInput);
+	auto lcph = SuffixArray::LcpHeightArray(vInput, sa_rk);
 
-	//配置参数
-	OptimalSubstringSelector<uint8_t>::SelectorConfig config{};
-	config.szMinLength = 2;           // k=2: 长度必须 > 2
-	config.szMinFrequency = 2;        // n=2: 出现次数必须 >= 2
+	MyAssert(sa_rk.vSuffixArray.size() == sa_rk.vRank.size());
+	MyAssert(sa_rk.vSuffixArray.size() == lcph.size());
 
-	// 权衡策略：长度 * 频次 (倾向于选长且重复多的)
-	config.fnWeightCalculator = [](size_t len, size_t freq) -> double
+	//根据sa_rk输出sa，一行一个
+	size_t szSize = sa_rk.vSuffixArray.size();
+	size_t szZeroPerfCount = (size_t)std::log10l((long double)szSize) + 1;
+	print("size: {}\n", szSize);
+
+	print("[{:<{}}] ({:<{}} - {:<{}}): {:<{}}\n", "i", szZeroPerfCount, "SA", szZeroPerfCount, "Hi", szZeroPerfCount, "Suffix", szZeroPerfCount);
+	for (size_t i = 0; i < szSize; ++i)
 	{
-		return len * len * freq;
-	};
+		const auto &itSA = sa_rk.vSuffixArray[i];
+		const auto &itHI = lcph[i];
 
-	config.fnIsInvalidEndingChar = [](uint8_t ch) -> bool
-	{
-		return ch < 10;  // 映射后 0~9 代表数字
-	};
-
-	config.fnIsInvalidStartingChar =
-	[](uint8_t ch) -> bool
-	{
-		return ch < 10;
-	};
-
-	//执行选择
-	auto result = OptimalSubstringSelector<uint8_t>::Select(vInput, config);
-
-	//输出结果
-	printf("\nTotal Count: %zu\n---------------------------\n", result.vIntervals.size());
-
-	for (const auto &s : result.vIntervals)
-	{
-		size_t szSize = s.szEnd - s.szStart + 1;
-		print("Count: [{}], Beg: [{}], Size: [{}]\nStr: ", s.szFrequency, s.szStart, szSize);
-
-		for (size_t i = 0; i < szSize; ++i)
+		print("[{:0{}}] ({:0{}} - {:0{}}): ", i, szZeroPerfCount, itSA, szZeroPerfCount, itHI, szZeroPerfCount);
+		for (size_t i = itSA; i < szSize; ++i)
 		{
-			putchar((uint32_t)IndexMapToOutput(vInput[s.szStart + i]));
+			putchar((uint32_t)IndexMapToOutput(vInput[i]));
 		}
-
 		putchar('\n');
 	}
 

@@ -47,6 +47,12 @@ public:
 		ValueList<size_t> vRank;
 	};
 	
+	struct RepeatFragment
+	{
+		size_t szPrefixLength;
+		std::vector<size_t> vStartIndices;
+	};
+
 public:
 	//返回值为排序在vSortArr中的下标，所以是size_t
 	template<typename T>
@@ -298,6 +304,61 @@ public:
 		}
 		
 		return vHeight;
+	}
+
+	template<typename T>
+	requires(std::is_integral_v<T> &&std::is_unsigned_v<T> && sizeof(T) <= sizeof(size_t))
+	static std::vector<RepeatFragment> AggregateMaximalRepeats(const std::vector<T> &vSuffixArray, const std::vector<size_t> &vLcpHeight, size_t szMinLength)
+	{
+		std::vector<RepeatFragment> vRepeatFragment;
+		size_t szLcpLength = vLcpHeight.size();
+
+		//LCP数组长度等于序列长度N，且lcp[0]==0
+		if (szLcpLength < 2)//lcp长度至少为2，否则值为空
+		{
+			return vRepeatFragment;
+		}
+
+		for (size_t i = 1; i < szLcpLength; ++i)
+		{
+			const size_t &szCurHeigh = vLcpHeight[i];
+
+			//阈值过滤：低于最小有效长度直接跳过
+			if (szCurHeigh < szMinLength)
+			{
+				continue;
+			}
+
+			//平台起点判定：仅当当前值大于左侧邻居时，视为新家族起点，否则跳过
+			if (szCurHeigh <= vLcpHeight[i - 1])//小于等于，跳过
+			{
+				continue;
+			}
+
+			//现在i-1是左边界起始索引
+			size_t szLeftBound = i - 1;
+
+			//右边界扩张：寻找当前平台的最右延伸点
+			//szRightBound在循环结束后是右边界索引结束位置（右边界不包含）
+			size_t szRightBound = i + 1;//从当前的下一个开始，因为已经判断过当前小于前一个
+			while (szRightBound < szLcpLength && vLcpHeight[szRightBound] >= szCurHeigh)//下一个还大于那么继续
+			{
+				++szRightBound;
+			}
+
+			//收集位置：SA中左闭右开区间[i-1, j)对应的所有起始索引
+			std::vector<size_t> vPositions;
+			vPositions.reserve(szRightBound - szLeftBound);
+			for (size_t k = szLeftBound; k < szRightBound; ++k)
+			{
+				vPositions.push_back(vSuffixArray[k]);
+			}
+
+			//完成，放入返回列表
+			vRepeatFragment.emplace_back(szCurHeigh, std::move(vPositions));
+		}
+
+		return vRepeatFragment;
 	}
 
 #undef PRINT_INF

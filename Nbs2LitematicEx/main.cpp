@@ -13,7 +13,6 @@
 #include <unordered_map>
 
 #include "MyAlgorithm.hpp"
-#include "RepetitionPatternFinder.hpp"
 
 template<typename... Args>
 void print(std::format_string<Args...> fmt, Args&&... args)
@@ -370,162 +369,6 @@ SAHI NoteValToSAHI(const NoteVal &valNote)
 	};
 }
 
-
-struct RepeatSubNote
-{
-	size_t start;      // 在原串中的起始位置（0-based）
-	size_t length;     // 子串长度
-	std::vector<size_t> occurrences;  // 所有出现位置（0-based）
-};
-
-using RepeatSubNoteList = std::vector<RepeatSubNote>;
-
-class RepeatSubNoteFinder
-{
-public:
-	static RepeatSubNoteList FindAll(const NoteVal &valNote, const SAHI &sahi)
-	{
-		size_t n = valNote.listEncodeNoteSub.size();
-		const auto &encode = valNote.listEncodeNoteSub;  // 编码数组，作为"字符串"使用
-
-		std::vector<RepeatSubNote> result;
-		std::vector<bool> covered(n, false);
-
-		// 并查集：next_free[i] 表示从位置 i 开始下一个未被覆盖的位置
-		std::vector<size_t> next_free(n + 1);
-		for (size_t i = 0; i <= n; ++i) next_free[i] = i;
-
-		// 按长度从大到小处理
-		for (int len = n / 2; len >= 1; --len)
-		{
-			size_t i = 1;
-
-			while (i < n)
-			{
-				if (sahi.HighArr[i] < len)
-				{
-					++i;
-					continue;
-				}
-
-				// 收集连续区间（这些后缀至少有 len 的公共前缀）
-				std::vector<size_t> positions;
-				positions.push_back(sahi.SuffArr[i - 1]);
-
-				while (i < n && sahi.HighArr[i] >= len)
-				{
-					positions.push_back(sahi.SuffArr[i]);
-					++i;
-				}
-
-				// 排序并去重
-				std::sort(positions.begin(), positions.end());
-				positions.erase(std::unique(positions.begin(), positions.end()),
-					positions.end());
-
-				// 贪心选择不重叠的位置
-				std::vector<size_t> selected;
-				size_t last_end = 0;
-
-				for (size_t pos : positions)
-				{
-					// 找到下一个未被覆盖的位置
-					size_t actual_pos = findNextFree(pos, next_free, n);
-					if (actual_pos >= n) continue;
-
-					// 检查是否能放下整个子串
-					if (actual_pos + len <= n)
-					{
-						// 检查这个区间是否完全未被覆盖（通过并查集快速验证）
-						bool valid = checkIntervalFree(actual_pos, len, next_free, n);
-
-						if (valid && (selected.empty() || actual_pos >= last_end))
-						{
-							selected.push_back(actual_pos);
-							last_end = actual_pos + len;
-						}
-					}
-				}
-
-				// 记录结果
-				if (selected.size() >= 2)
-				{
-					RepeatSubNote sub;
-					sub.start = selected[0];
-					sub.length = len;
-					sub.occurrences = selected;
-					result.push_back(sub);
-
-					// 标记覆盖
-					for (size_t pos : selected)
-					{
-						markCovered(pos, len, covered, next_free, n);
-					}
-				}
-			}
-		}
-
-		return result;
-	}
-
-private:
-	// 带路径压缩的查找
-	static size_t findNextFree(size_t pos, std::vector<size_t> &next_free, size_t n)
-	{
-		if (pos >= n) return n;
-		if (next_free[pos] != pos)
-		{
-			next_free[pos] = findNextFree(next_free[pos], next_free, n);
-		}
-		return next_free[pos];
-	}
-
-	// 检查区间 [start, start+len) 是否完全未被覆盖
-	static bool checkIntervalFree(size_t start, size_t len,
-		std::vector<size_t> &next_free, size_t n)
-	{
-		size_t pos = start;
-		while (pos < start + len)
-		{
-			if (next_free[pos] != pos)  // 当前位置已被覆盖
-				return false;
-			pos++;
-		}
-		return true;
-	}
-
-	// 标记区间 [start, start+len) 为已覆盖
-	static void markCovered(size_t start, size_t len,
-		std::vector<bool> &covered,
-		std::vector<size_t> &next_free,
-		size_t n)
-	{
-		for (size_t j = start; j < start + len; ++j)
-		{
-			covered[j] = true;
-			// 将当前位置指向下一个位置
-			next_free[j] = findNextFree(j + 1, next_free, n);
-		}
-
-		// 修复前面可能指向当前位置的节点
-		// 只修复 start 之前的相邻区域
-		for (size_t j = start; j > 0; --j)
-		{
-			size_t idx = j - 1;
-			if (next_free[idx] >= start && next_free[idx] < start + len)
-			{
-				next_free[idx] = findNextFree(start, next_free, n);
-			}
-			else if (next_free[idx] != idx)
-			{
-				break;  // 已经指向更远的区域，不需要继续
-			}
-		}
-	}
-};
-
-
-
 int main(int argc, char *argv[]) try
 {
 	MyAssert(argc == 2);
@@ -595,41 +438,41 @@ int main(int argc, char *argv[]) try
 	//	}
 
 		//从音符列表挨个生成
-	auto mapInst = ToInstMap(noteList);
-	for (auto &it : mapInst)
-	{
-		auto listNoteSub = ToMyNoteSubList(it);
-		NoteVal valNote = ToNoteVal(listNoteSub);
-		auto sahi = NoteValToSAHI(valNote);
-		//auto listRepeatSubNote = FindLongestNonOverlapRepeats(sahi, valNote);
-
-		print("------------------------------------------\nInst: [{}], Count: [{}]\n", it.front().instrument, it.size());
-
-		auto repFind = RepetitionPatternFinder::findRepeatingPatterns(
-			valNote.listEncodeNoteSub,
-			sahi.SuffArr,
-			sahi.HighArr,
-			RepetitionPatternFinder::computeScores,
-			[&valNote](const std::vector<size_t> &listInput, size_t index) -> bool//返回true筛选掉
-			{
-				size_t szEncodeNote = listInput[index];
-				return valNote.listNoteSubMap[szEncodeNote].enType == MyNoteSub::Type::Blank;
-			}
-		);
-
-		for (const auto &rep : repFind)
-		{
-			print("------------------------------------------\nsub length: [{}]\npos: ", rep.length);
-			for (size_t pos : rep.occurrences)
-			{
-				print("[{}],", pos);
-			}
-			print("\nnotes:\n");
-			for (auto &note : rep.content)
-			{
-				valNote.listNoteSubMap[note].Print();
-			}
-		}
+//	auto mapInst = ToInstMap(noteList);
+//	for (auto &it : mapInst)
+//	{
+//		auto listNoteSub = ToMyNoteSubList(it);
+//		NoteVal valNote = ToNoteVal(listNoteSub);
+//		auto sahi = NoteValToSAHI(valNote);
+//		//auto listRepeatSubNote = FindLongestNonOverlapRepeats(sahi, valNote);
+//
+//		print("------------------------------------------\nInst: [{}], Count: [{}]\n", it.front().instrument, it.size());
+//
+//		auto repFind = RepetitionPatternFinder::findRepeatingPatterns(
+//			valNote.listEncodeNoteSub,
+//			sahi.SuffArr,
+//			sahi.HighArr,
+//			RepetitionPatternFinder::computeScores,
+//			[&valNote](const std::vector<size_t> &listInput, size_t index) -> bool//返回true筛选掉
+//			{
+//				size_t szEncodeNote = listInput[index];
+//				return valNote.listNoteSubMap[szEncodeNote].enType == MyNoteSub::Type::Blank;
+//			}
+//		);
+//
+//		for (const auto &rep : repFind)
+//		{
+//			print("------------------------------------------\nsub length: [{}]\npos: ", rep.length);
+//			for (size_t pos : rep.occurrences)
+//			{
+//				print("[{}],", pos);
+//			}
+//			print("\nnotes:\n");
+//			for (auto &note : rep.content)
+//			{
+//				valNote.listNoteSubMap[note].Print();
+//			}
+//		}
 
 		// 输出结果（解码后的实际内容）
 		//for (const auto &sub : listRepeatSubNote)
@@ -648,8 +491,43 @@ int main(int argc, char *argv[]) try
 		//		note.Print();
 		//	}
 		//}
-		print("------------------------------------------\n\n");
-	}
+//		print("------------------------------------------\n\n");
+//	}
+
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	return 0;
 }
