@@ -417,7 +417,7 @@ re_try:
 	}
 
 #define REP_SUBSTR_MIN_LENGTH 3
-#define REP_SUBSTR_MIN_COUNT 3
+#define REP_SUBSTR_MIN_COUNT 2
 
 	auto repPrint =
 	[](const SuffixArray::RepeatFragmentList &rep, const auto &vInput, const char *pInfo = "") -> void
@@ -550,6 +550,8 @@ re_try:
 		vNewStartIndices.reserve(it.vStartIndices.size());
 
 		size_t szLastIndex = it.vStartIndices.front();//贪心起始选择开头
+		vNewStartIndices.emplace_back(szLastIndex);//先行插入
+
 		for (size_t i = 1; i < it.vStartIndices.size(); ++i)//从第二个开始比较
 		{
 			auto &szCurIndex = it.vStartIndices[i];
@@ -557,7 +559,7 @@ re_try:
 			if (szCurIndex - szLastIndex >= it.szPrefixLength)
 			{
 				szLastIndex = szCurIndex;
-				vNewStartIndices.emplace_back(szCurIndex);
+				vNewStartIndices.emplace_back(szLastIndex);
 			}
 			//else //跳过
 			//{}
