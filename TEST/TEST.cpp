@@ -383,6 +383,11 @@ re_try:
 		}
 	}
 
+	if (iGet == EOF)
+	{
+		return 0;
+	}
+
 	if (bSkip)
 	{
 		goto re_try;
@@ -597,23 +602,24 @@ re_try:
 
 			if (auto cmp = szLeftWeight <=> szRightWeight; cmp != 0)
 			{
-				return cmp < 0;
+				return cmp > 0;
 			}
 			else if (auto cmp = l.vStartIndices.size() <=> r.vStartIndices.size(); cmp != 0)
 			{
-				return cmp < 0;
+				return cmp > 0;
 			}
 			else
 			{
-				return l.szPrefixLength < r.szPrefixLength;
+				return l.szPrefixLength > r.szPrefixLength;
 			}
 		}
 	);
 
+	repPrint(newGreedyRepPrep, vInput, "[weight sorting]");
 	
-	//查找第一个区间起始下标，如果找不到，那么返回值为(size_t)-1
+	//查找第一个区间起始下标
 	auto FindSection =
-	[]<typename T>(T & vGreedyOccupiedArray, size_t szSecStart)->std::conditional_t<std::is_const_v<T>, std::vector<Section>::const_iterator, std::vector<Section>::iterator>
+	[]<typename T>(T &vGreedyOccupiedArray, size_t szSecStart)->std::conditional_t<std::is_const_v<T>, std::vector<Section>::const_iterator, std::vector<Section>::iterator>
 	requires(std::is_same_v<std::remove_cv_t<T>, std::vector<Section>>)
 	{
 		return std::upper_bound(vGreedyOccupiedArray.begin(), vGreedyOccupiedArray.end(), szSecStart,
