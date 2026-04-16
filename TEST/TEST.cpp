@@ -419,11 +419,10 @@ re_try:
 #define REP_SUBSTR_MIN_LENGTH 3
 #define REP_SUBSTR_MIN_COUNT 3
 
-	auto rep = SuffixArray::AggregateMaximalRepeats(sa_rk.vSuffixArray, lcph, REP_SUBSTR_MIN_LENGTH);
-
-	auto repPrint = [](const SuffixArray::RepeatFragmentList &rep, const auto &vInput) -> void
+	auto repPrint =
+	[](const SuffixArray::RepeatFragmentList &rep, const auto &vInput, const char *pInfo = "") -> void
 	{
-		print("=========================================\n");
+		print("=========================================\n{}\n", pInfo);
 		print("size: {}\n", rep.size());
 
 		for (const auto &it : rep)
@@ -448,7 +447,8 @@ re_try:
 		}
 	};
 
-	repPrint(rep, vInput);
+	auto rep = SuffixArray::AggregateMaximalRepeats(sa_rk.vSuffixArray, lcph, REP_SUBSTR_MIN_LENGTH);
+	repPrint(rep, vInput, "[AggregateMaximalRepeats]");
 
 	//去首尾空白（数字模拟）
 	//先去尾部，再去头部，效率更高
@@ -527,7 +527,7 @@ re_try:
 		}
 	}
 
-	repPrint(newRep, vInput);
+	repPrint(newRep, vInput, "[strip whitespace]");
 
 	//贪心查找不重叠集合
 	//对于每一个家族（小集合）内部的多个重复序列，先进行一次顺序贪心（集合本身需要按照索引顺序排序）
@@ -703,11 +703,9 @@ re_try:
 	}
 
 	//贪心完成，newGreedyRep存储所需内容
-	repPrint(newGreedyRep, vInput);
+	repPrint(newGreedyRep, vInput, "[Greedy algorithm]");
 
 	//字符串完美周期性检测与字符串单一字符组成检测
-
-
 
 	print("=========================================\n");
 	goto main_start;
