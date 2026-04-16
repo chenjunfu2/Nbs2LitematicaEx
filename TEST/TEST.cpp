@@ -421,7 +421,7 @@ re_try:
 		putchar('\n');
 	}
 
-#define REP_SUBSTR_MIN_LENGTH 3
+#define REP_SUBSTR_MIN_LENGTH 2
 #define REP_SUBSTR_MIN_COUNT 2
 
 	auto repPrint =
@@ -722,6 +722,23 @@ re_try:
 	repPrint(newGreedyRep, vInput, "[Greedy algorithm]");
 
 	//字符串完美周期性检测与字符串单一字符组成检测
+
+
+	//TODOTODOTODO
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	print("=========================================\n");
 	goto main_start;
