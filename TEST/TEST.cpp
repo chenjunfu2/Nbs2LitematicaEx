@@ -703,10 +703,7 @@ re_try:
 	}
 
 	//贪心完成，newGreedyRep存储所需内容
-
-
-
-
+	repPrint(newGreedyRep, vInput);
 
 	//字符串完美周期性检测与字符串单一字符组成检测
 
