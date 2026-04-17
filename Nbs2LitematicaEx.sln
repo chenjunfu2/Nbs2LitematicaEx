@@ -48,7 +48,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nbt_cpp", "nbt_cpp", "{5967
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TEST", "TEST\TEST.vcxproj", "{B8AFDE43-72C5-440F-94A4-E29C27782025}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "references", "references", "{5487CF29-A0A2-4D2B-8148-772ABC15D4F6}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "References", "References", "{5487CF29-A0A2-4D2B-8148-772ABC15D4F6}"
+	ProjectSection(SolutionItems) = preProject
+		References\cmpc2003-deepseek-translate.md = References\cmpc2003-deepseek-translate.md
+		References\cmpc2003-qwen-translate.md = References\cmpc2003-qwen-translate.md
+		References\cmpc2003.pdf = References\cmpc2003.pdf
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
