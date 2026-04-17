@@ -676,7 +676,6 @@ public:
 	}
 };
 
-
 class GreedyAlgorithm
 {
 	GreedyAlgorithm(void) = delete;
@@ -918,7 +917,6 @@ public:
 		return listGreedyRepeatFragment;
 	}
 };
-
 
 class PeriodicityDetector
 {
