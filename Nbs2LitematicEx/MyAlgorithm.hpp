@@ -769,23 +769,24 @@ private:
 	};
 
 public:
-	//默认排序函数：按照L*k -> K -> L降序排序家族
+	//默认排序函数：按照L * F -> L -> F降序排序家族，L是长度Length，F是出现频率Frequency
 	static bool DefaultGreedySort(const SuffixArray::RepeatFragment &l, const SuffixArray::RepeatFragment &r)
 	{
 		size_t szLeftWeight = l.szPrefixLength * l.vStartIndices.size();
 		size_t szRightWeight = r.szPrefixLength * r.vStartIndices.size();
 
-		if (auto cmp = szLeftWeight <=> szRightWeight; cmp != 0)
+		if (auto cmpWeight = szLeftWeight <=> szRightWeight; cmpWeight != 0)
 		{
-			return cmp > 0;
+			return cmpWeight > 0;
 		}
-		else if (auto cmp = l.vStartIndices.size() <=> r.vStartIndices.size(); cmp != 0)
+		else if (auto cmpLength = l.szPrefixLength <=> r.szPrefixLength; cmpLength != 0)
 		{
-			return cmp > 0;
+			return cmpLength > 0;
 		}
 		else
 		{
-			return l.szPrefixLength > r.szPrefixLength;
+			auto cmpFrequency = l.vStartIndices.size() > r.vStartIndices.size();
+			return cmpFrequency > 0;
 		}
 	}
 
