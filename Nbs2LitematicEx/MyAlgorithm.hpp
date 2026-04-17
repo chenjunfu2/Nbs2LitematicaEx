@@ -678,7 +678,7 @@ class GreedyAlgorithm
 	GreedyAlgorithm(void) = delete;
 	~GreedyAlgorithm(void) = delete;
 
-public:
+private:
 	struct GreedySectionOccupiedArray
 	{
 	public:
@@ -769,6 +769,27 @@ public:
 	};
 
 public:
+	//默认排序函数：按照L*k -> K -> L降序排序家族
+	static bool DefaultGreedySort(const SuffixArray::RepeatFragment &l, const SuffixArray::RepeatFragment &r)
+	{
+		size_t szLeftWeight = l.szPrefixLength * l.vStartIndices.size();
+		size_t szRightWeight = r.szPrefixLength * r.vStartIndices.size();
+
+		if (auto cmp = szLeftWeight <=> szRightWeight; cmp != 0)
+		{
+			return cmp > 0;
+		}
+		else if (auto cmp = l.vStartIndices.size() <=> r.vStartIndices.size(); cmp != 0)
+		{
+			return cmp > 0;
+		}
+		else
+		{
+			return l.szPrefixLength > r.szPrefixLength;
+		}
+	}
+
+public:
 	//贪心查找不重叠集合：
 	//对于每一个家族（小集合）内部的多个重复序列，先进行一次顺序贪心（集合本身需要按照索引顺序排序）
 	//内部贪心因为是定长关系，可以直接根据起始索引差小于长度，直接排除重叠且不需要的子序列
@@ -832,26 +853,6 @@ public:
 		}
 
 		return listGreedyRepeatFragment;
-	}
-
-	//默认排序函数：按照L*k -> K -> L降序排序家族
-	static bool DefaultGreedySort(const SuffixArray::RepeatFragment &l, const SuffixArray::RepeatFragment &r)
-	{
-		size_t szLeftWeight = l.szPrefixLength * l.vStartIndices.size();
-		size_t szRightWeight = r.szPrefixLength * r.vStartIndices.size();
-
-		if (auto cmp = szLeftWeight <=> szRightWeight; cmp != 0)
-		{
-			return cmp > 0;
-		}
-		else if (auto cmp = l.vStartIndices.size() <=> r.vStartIndices.size(); cmp != 0)
-		{
-			return cmp > 0;
-		}
-		else
-		{
-			return l.szPrefixLength > r.szPrefixLength;
-		}
 	}
 
 	template<typename SortFunc_T = decltype(DefaultGreedySort)>
@@ -966,7 +967,7 @@ public:
 
 	//返回循环周期长度，如果为0，则串不循环
 	template<typename T>
-	size_t CheckPeriodicity(const std::vector<T> &vInput, const std::vector<size_t> &vPartialMatch)
+	static size_t CheckPeriodicity(const std::vector<T> &vInput, const std::vector<size_t> &vPartialMatch)
 	{
 		size_t szInputLength = vInput.size();
 		if (szInputLength < 2)//单字符或空不算周期

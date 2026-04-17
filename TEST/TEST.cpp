@@ -456,57 +456,52 @@ re_try:
 	repPrint(rep, vInput, "[AggregateMaximalRepeats]");
 
 	
-	
-
+	auto newRep = FragmentTrimmer::TrimBoundaries(rep, REP_SUBSTR_MIN_COUNT,
+		[&vInput](size_t szIndex)->bool
+		{
+			return vInput[szIndex] < 10;
+		}
+	);
 	repPrint(newRep, vInput, "[strip whitespace]");
 
 
+	auto newGreedyRepPrep = GreedyAlgorithm::GreedyNonOverlapPerFragment(newRep, REP_SUBSTR_MIN_COUNT);
+	repPrint(newGreedyRepPrep, vInput, "[GreedyNonOverlapPerFragment]");
 
-
-	repPrint(newGreedyRepPrep, vInput, "[Greedy algorithm preprocessing]");
-
-
-
-
-	
-
-	
-
+	GreedyAlgorithm::GreedySortFragments(newGreedyRepPrep, GreedyAlgorithm::DefaultGreedySort);
 	repPrint(newGreedyRepPrep, vInput, "[weight sorting]");
 
 
-	
-
-	
-
+	auto newGreedyRep = GreedyAlgorithm::GreedyNonOverlapAcrossFragments(newGreedyRepPrep, REP_SUBSTR_MIN_COUNT);
 	//贪心完成，newGreedyRep存储所需内容
 	repPrint(newGreedyRep, vInput, "[Greedy algorithm]");
 
 	//字符串完美周期性检测与字符串单一字符组成检测
+	//对贪心完成的每个数组进行检测
+	print("=========================================\n");
+	for (auto &it : newGreedyRep)
+	{
+		auto PmArray = PeriodicityDetector::ComputePartialMatch(it.vStartIndices);
+		auto szPeriodLength = PeriodicityDetector::CheckPeriodicity(it.vStartIndices, PmArray);
 
-
-	//TODOTODOTODO
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+		if (szPeriodLength != 0)
+		{
+			print("\nperiod: [{}]\nval({}):", szPeriodLength, it.szPrefixLength);
+			if (it.vStartIndices.empty())
+			{
+				print("[NULL]\n");
+				continue;
+			}
+			for (size_t i = it.vStartIndices.front(), end = i + it.szPrefixLength; i < end; ++i)
+			{
+				putchar((uint32_t)IndexMapToOutput(vInput[i]));
+			}
+			putchar('\n');
+		}
+	}
 
 	print("=========================================\n");
 	goto main_start;
 
 	return 0;
 }
-
-
-
-
