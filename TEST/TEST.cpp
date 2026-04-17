@@ -481,6 +481,11 @@ re_try:
 	print("=========================================\n[CheckPeriodicity]\n");
 	for (auto &it : newGreedyRep)
 	{
+		if (it.vStartIndices.empty())
+		{
+			continue;
+		}
+
 		const std::span<const uint8_t> viewInput = { &vInput[it.vStartIndices.front()], it.szPrefixLength };
 
 		//对原始输入数组的部分进行查重判断
@@ -490,12 +495,12 @@ re_try:
 		//出现自循环
 		if (szPeriodLength != 0)
 		{
-			print("period: [{}]\nval({}):", szPeriodLength, it.szPrefixLength);
-			if (it.vStartIndices.empty())
+			print("period([{}]):", szPeriodLength);
+			for (const auto &it : viewInput.subspan(0, szPeriodLength))
 			{
-				print("[NULL]\n");
-				continue;
+				putchar((uint32_t)IndexMapToOutput(it));
 			}
+			print("\nval({}):", it.szPrefixLength);
 			for (const auto &it : viewInput)
 			{
 				putchar((uint32_t)IndexMapToOutput(it));
