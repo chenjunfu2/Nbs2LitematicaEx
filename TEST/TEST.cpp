@@ -490,7 +490,7 @@ re_try:
 		//出现自循环
 		if (szPeriodLength != 0)
 		{
-			print("\nperiod: [{}]\nval({}):", szPeriodLength, it.szPrefixLength);
+			print("period: [{}]\nval({}):", szPeriodLength, it.szPrefixLength);
 			if (it.vStartIndices.empty())
 			{
 				print("[NULL]\n");
