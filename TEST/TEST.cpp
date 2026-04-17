@@ -290,8 +290,6 @@ int main()
 
 
 #include "..\Nbs2LitematicEx\MyAlgorithm.hpp"
-
-#include "..\Dependencies\nbt_cpp\NBT_Print.hpp"
 #include "..\Dependencies\util\MyAssert.hpp"
 #include <stdio.h>
 #include <vector>
@@ -303,14 +301,14 @@ int main()
 #include <ranges>
 
 template<typename... Args>
-void print(std::format_string<Args...> fmt, Args&&... args)
+void print(std::_Fmt_string<Args...> fmt, Args&&... args)
 {
 	std::string output = std::format(fmt, std::forward<Args>(args)...);
 	fwrite(output.data(), 1, output.size(), stdout);
 }
 
 template<typename... Args>
-void printerr(std::format_string<Args...> fmt, Args&&... args)
+void printerr(std::_Fmt_string<Args...> fmt, Args&&... args)
 {
 	std::string output = std::format(fmt, std::forward<Args>(args)...);
 	fwrite(output.data(), 1, output.size(), stderr);
