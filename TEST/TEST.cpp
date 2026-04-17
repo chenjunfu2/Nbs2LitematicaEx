@@ -455,82 +455,8 @@ re_try:
 	auto rep = SuffixArray::AggregateMaximalRepeats(sa_rk.vSuffixArray, lcph, REP_SUBSTR_MIN_LENGTH);
 	repPrint(rep, vInput, "[AggregateMaximalRepeats]");
 
-	//去首尾空白（数字模拟）
-	//先去尾部，再去头部，效率更高
-	SuffixArray::RepeatFragmentList newRep;
-	newRep.reserve(rep.size());
-	for (auto &it : rep)
-	{
-		if (it.vStartIndices.empty())
-		{
-			continue;
-		}
-		
-		size_t szFrontBlankLength = 0;
-		size_t szBackBlankLength = 0;
-		size_t szFirstSubStrStart = it.vStartIndices.front();
-
-		//只取其中一个重复序列判断（因为都一样，取第一即可）
-		for (size_t i = szFirstSubStrStart, end = i + it.szPrefixLength; i < end; ++i)
-		{
-			if (vInput[i] < 10)//0~9是数字，模拟空白
-			{
-				++szFrontBlankLength;
-			}
-			else
-			{
-				break;//遇到非数字，跳出
-			}
-		}
-
-		//判断尾部
-		for (size_t end = szFirstSubStrStart + szFrontBlankLength + 1, i = szFirstSubStrStart + it.szPrefixLength; i > end; --i)//从头部空白后作为结束点
-		{
-			if (vInput[i - 1] < 10)//0~9是数字，模拟空白
-			{
-				++szBackBlankLength;
-			}
-			else
-			{
-				break;//遇到非数字，跳出
-			}
-		}
-
-		//头尾都去除后，检查是否为0
-		if (szFrontBlankLength == 0 && szBackBlankLength == 0)
-		{
-			newRep.push_back(std::move(it));//移动
-			continue;//为0，那么这个序列不以空白开头、结尾，插入并跳过
-		}
-
-		//先处理尾部
-		size_t szNewPrefixLength = it.szPrefixLength;
-		if (szBackBlankLength != 0)
-		{
-			szNewPrefixLength -= szBackBlankLength;
-		}
-
-		//再处理头部，注意，头部需要遍历it.vStartIndices进行索引递增裁切，并且，如果整个串都为空则会出现
-		//szNewPrefixLength小等于szFrontBlankLength，那么当前值应该被丢弃
-		if (szNewPrefixLength <= szFrontBlankLength)
-		{
-			continue;//跳过并丢弃
-		}
-		szNewPrefixLength -= szFrontBlankLength;
-
-		//串不为空，那么至少需要大等于设定值，否则丢弃
-		if (szNewPrefixLength < REP_SUBSTR_MIN_LENGTH)
-		{
-			continue;//跳过并丢弃
-		}
-
-		//串裁切后依旧符合模式
-		auto &newVal = newRep.emplace_back(szNewPrefixLength, std::move(it.vStartIndices));//提前插入，然后再处理
-		for (auto &it2 : newVal.vStartIndices)//对每个索引增加szFrontBlankLength以裁切开头
-		{
-			it2 += szFrontBlankLength;
-		}
-	}
+	
+	
 
 	repPrint(newRep, vInput, "[strip whitespace]");
 

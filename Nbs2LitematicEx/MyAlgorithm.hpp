@@ -579,6 +579,99 @@ public:
 	}
 };
 
+class FragmentTrimmer
+{
+	FragmentTrimmer(void) = delete;
+	~FragmentTrimmer(void) = delete;
+
+public:
+	//去首尾空白（数字模拟）
+	//先去尾部，再去头部，效率更高
+
+	template<typename TrimFunc_T>
+	static SuffixArray::RepeatFragmentList TrimBoundaries(const SuffixArray::RepeatFragmentList &listRepeatFragment, size_t szMinRepeatCount, TrimFunc_T funcTrim)
+	{
+		SuffixArray::RepeatFragmentList listTrimRepeatFragment;
+		listTrimRepeatFragment.reserve(listRepeatFragment.size());
+
+		for (const auto &it : listRepeatFragment)
+		{
+			if (it.vStartIndices.empty())
+			{
+				continue;
+			}
+
+			size_t szFrontBlankLength = 0;
+			size_t szBackBlankLength = 0;
+			size_t szFirstSubStrStart = it.vStartIndices.front();
+
+			//只取其中一个重复序列判断（因为都一样，取第一即可）
+			for (size_t i = szFirstSubStrStart, end = i + it.szPrefixLength; i < end; ++i)
+			{
+				if (funcTrim(i))//需要去除
+				{
+					++szFrontBlankLength;
+				}
+				else
+				{
+					break;//遇到非数字，跳出
+				}
+			}
+
+			//判断尾部
+			for (size_t end = szFirstSubStrStart + szFrontBlankLength + 1, i = szFirstSubStrStart + it.szPrefixLength; i > end; --i)//从头部空白后作为结束点
+			{
+				if (funcTrim(i))//需要去除
+				{
+					++szBackBlankLength;
+				}
+				else
+				{
+					break;//遇到非数字，跳出
+				}
+			}
+
+			//头尾都去除后，检查是否为0
+			if (szFrontBlankLength == 0 && szBackBlankLength == 0)
+			{
+				listTrimRepeatFragment.push_back(std::move(it));//移动
+				continue;//为0，那么这个序列不以去除内容开头、结尾，插入并跳过
+			}
+
+			//先处理尾部，尾部仅需要修改总长度即可去除所有
+			size_t szNewPrefixLength = it.szPrefixLength;
+			if (szBackBlankLength != 0)
+			{
+				szNewPrefixLength -= szBackBlankLength;
+			}
+
+			//再处理头部，注意，头部需要遍历it.vStartIndices进行索引递增裁切，
+			//并且，如果整个串裁切后为空则会出现szNewPrefixLength小等于szFrontBlankLength，
+			//那么这种情况下，当前值应该被丢弃
+			if (szNewPrefixLength <= szFrontBlankLength)
+			{
+				continue;//跳过并丢弃
+			}
+			szNewPrefixLength -= szFrontBlankLength;
+
+			//串不为空，那么至少需要大等于设定值，否则丢弃
+			if (szNewPrefixLength < szMinRepeatCount)
+			{
+				continue;//跳过并丢弃
+			}
+
+			//串裁切后依旧符合模式
+			auto &newVal = listTrimRepeatFragment.emplace_back(szNewPrefixLength, std::move(it.vStartIndices));//提前插入，然后再处理
+			for (auto &it2 : newVal.vStartIndices)//对每个索引增加szFrontBlankLength以裁切开头
+			{
+				it2 += szFrontBlankLength;
+			}
+		}
+
+		return listTrimRepeatFragment;
+	}
+};
+
 
 class GreedyAlgorithm
 {
@@ -680,16 +773,12 @@ public:
 	//对于每一个家族（小集合）内部的多个重复序列，先进行一次顺序贪心（集合本身需要按照索引顺序排序）
 	//内部贪心因为是定长关系，可以直接根据起始索引差小于长度，直接排除重叠且不需要的子序列
 	//然后对每个家族之间的重复序列进行全量长度排序，再进行一次完整的贪心，求出最终的不重叠循环串集合
-	//对于最终的全量家族之间的贪心来说，如果某个家族因为被其它家族挤占生存空间而完全淘汰，
-	//那么应该回滚贪心数组中被淘汰家族占用的位置以便其它家族抢占
-
-	//使用区间二分进行贪心占座
-	//首先按照L*k -> K -> L降序排序家族
-	//然后进行贪心抢占
+	//使用区间二分进行贪心占座：首先按照L*k -> K -> L降序排序家族，然后进行贪心抢占
 	//对于每个家族来说，首先遍历家族成员，在区间抢占排序列表查找碰撞
 	//如果出现碰撞则淘汰对应元素，并在临时列表中保留未碰撞的元素，
 	//如果最终保留元素的数量至少大于要求K次，那么家族符合贪心要求
 	//加入占座列表并抢占空位，然后处理下一家族
+
 
 	//对每个Fragment内的vStartIndices进行贪心区间排重
 	static SuffixArray::RepeatFragmentList GreedyNonOverlapPerFragment(const SuffixArray::RepeatFragmentList &listRepeatFragment, size_t szMinRepeatCount)
@@ -891,12 +980,13 @@ public:
 		//周期长度
 		size_t szPeriodLength = szInputLength - szOverlapLength;
 
-		// 判定条件
+		//如果周期至少有1，且剩余长度（周期偏移对齐举例）刚好能整除，则代表内部串为循环模式
 		if (szOverlapLength > 0 && szInputLength % szPeriodLength == 0)
 		{
-			return szPeriodLength;
+			return szPeriodLength;//返回循环周期长度
 		}
 
+		//否则szPeriodLength不代表循环周期，返回0，串没有周期性
 		return 0;
 	}
 };
