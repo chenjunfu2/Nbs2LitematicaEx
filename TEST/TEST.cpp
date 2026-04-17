@@ -770,6 +770,11 @@ std::vector<size_t> ComputePartialMatch(const std::vector<T> &vInput)
 		//只要还有候选前缀，且当前字符比对失败，就不断缩短前缀重试
 		while (szPrefixLength > 0 && vInput[szIndex] != vInput[szPrefixLength])
 		{
+			//这里事实上相当于把当前匹配的长度-1作为前半段（前缀）的下标，
+			//获取上一个匹配的序列中的前半部分，因为vPartialMatch有
+			//递归自相似性，所以这个操作相当于把最后一个不匹配的字符
+			//移动到前面匹配的位置的后一位进行匹配，并查找是否可以在
+			//更短的前半模式串中得到当前字符可以组成的前后缀。
 			szPrefixLength = vPartialMatch[szPrefixLength - 1];
 		}
 		
