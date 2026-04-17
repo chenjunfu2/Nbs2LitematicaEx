@@ -534,189 +534,24 @@ re_try:
 
 	repPrint(newRep, vInput, "[strip whitespace]");
 
-	//贪心查找不重叠集合
-	//对于每一个家族（小集合）内部的多个重复序列，先进行一次顺序贪心（集合本身需要按照索引顺序排序）
-	//内部贪心因为是定长关系，可以直接根据起始索引差小于长度，直接排除重叠且不需要的子序列
-	//然后对每个家族之间的重复序列进行全量长度排序，再进行一次完整的贪心，求出最终的不重叠循环串集合
-	//对于最终的全量家族之间的贪心来说，如果某个家族因为被其它家族挤占生存空间而完全淘汰，
-	//那么应该回滚贪心数组中被淘汰家族占用的位置以便其它家族抢占
-	SuffixArray::RepeatFragmentList newGreedyRepPrep;//贪心结果
-	for (auto &it : newRep)
-	{
-		if (it.vStartIndices.size() < 2)//至少2个元素才有筛选必要
-		{
-			continue;
-		}
 
-		std::ranges::sort(it.vStartIndices, std::less<>());//索引升序
 
-		//预分配贪心筛选结果数组
-		std::vector<size_t> vNewStartIndices;
-		vNewStartIndices.reserve(it.vStartIndices.size());
-
-		size_t szLastIndex = it.vStartIndices.front();//贪心起始选择开头
-		vNewStartIndices.emplace_back(szLastIndex);//先行插入
-
-		for (size_t i = 1; i < it.vStartIndices.size(); ++i)//从第二个开始比较
-		{
-			auto &szCurIndex = it.vStartIndices[i];
-
-			if (szCurIndex - szLastIndex >= it.szPrefixLength)
-			{
-				szLastIndex = szCurIndex;
-				vNewStartIndices.emplace_back(szLastIndex);
-			}
-			//else //跳过
-			//{}
-		}
-
-		//检测剩余数量是否符合要求
-		if (vNewStartIndices.size() < REP_SUBSTR_MIN_COUNT)
-		{
-			continue;//不符合要求，去除
-		}
-
-		//否则插入
-		newGreedyRepPrep.emplace_back(it.szPrefixLength, std::move(vNewStartIndices));
-	}
 
 	repPrint(newGreedyRepPrep, vInput, "[Greedy algorithm preprocessing]");
 
 
-	//区间（左闭右开）
-	struct Section
-	{
-		size_t szBeg;//包含
-		size_t szEnd;//不包含
-	};
-	std::vector<Section> vGreedyOccupiedArray;//区间抢占排序列表
 
-	//使用区间二分进行贪心占座
-	//首先按照L*k -> K -> L降序排序家族
 
-	std::ranges::sort(newGreedyRepPrep,
-		[](const SuffixArray::RepeatFragment &l, const SuffixArray::RepeatFragment &r)-> bool
-		{
-			size_t szLeftWeight = l.szPrefixLength * l.vStartIndices.size();
-			size_t szRightWeight = r.szPrefixLength * r.vStartIndices.size();
+	
 
-			if (auto cmp = szLeftWeight <=> szRightWeight; cmp != 0)
-			{
-				return cmp > 0;
-			}
-			else if (auto cmp = l.vStartIndices.size() <=> r.vStartIndices.size(); cmp != 0)
-			{
-				return cmp > 0;
-			}
-			else
-			{
-				return l.szPrefixLength > r.szPrefixLength;
-			}
-		}
-	);
+	
 
 	repPrint(newGreedyRepPrep, vInput, "[weight sorting]");
+
+
 	
-	//查找第一个区间起始下标
-	auto FindSection =
-	[]<typename T>(T &vGreedyOccupiedArray, size_t szSecStart) -> std::conditional_t<std::is_const_v<T>, std::vector<Section>::const_iterator, std::vector<Section>::iterator>
-	requires(std::is_same_v<std::remove_cv_t<T>, std::vector<Section>>)
-	{
-		return std::upper_bound(vGreedyOccupiedArray.begin(), vGreedyOccupiedArray.end(), szSecStart,
-			[](size_t szSecStart, const Section &info)->bool
-			{
-				return szSecStart < info.szBeg;
-			}
-		);
-	};
+
 	
-	
-	//判断区间是否出现碰撞，是返回true否则false
-	auto IsSectionCollision =
-	[&FindSection](const std::vector<Section> &vGreedyOccupiedArray, const Section &sec) -> bool
-	{
-		//二分查找，vGreedyOccupiedArray使用区间起始进行排序，且保证区间末尾至少小等于下一个区间起始（左闭右开保证区间末尾无法取到）
-		auto itFind = FindSection(vGreedyOccupiedArray, sec.szBeg);//找到第一个后向元素
-
-		//如果是头部，那么没有前向判断，否则判断前向区间
-		if (itFind != vGreedyOccupiedArray.begin())
-		{
-			auto itForward = itFind - 1;
-			if (sec.szBeg < itForward->szEnd)//可以等于（因为可取，如果小于则区间碰撞）
-			{
-				return true;
-			}
-		}
-
-		//如果是末尾，那么没有后向判断，否则判断后向区间
-		if (itFind != vGreedyOccupiedArray.end())//当前Find其实就是后向位置（第一个大于前向begin的元素）
-		{
-			const auto &itBackward = itFind;
-			if (sec.szEnd > itBackward->szBeg)//可以等于（因为可取）
-			{
-				return true;
-			}
-		}
-
-		//都未碰撞，返回false
-		return false;
-	};
-
-
-	//此api调用需要保证：先进性过碰撞判断，确保无碰撞再插入，否则行为未定义
-	auto InsertSection =
-	[&FindSection]<typename T>(std::vector<Section> &vGreedyOccupiedArray, T &&sec) -> std::vector<Section>::iterator
-	{
-		//二分查找，vGreedyOccupiedArray使用区间起始进行排序，且保证区间末尾至少小等于下一个区间起始（左闭右开保证区间末尾无法取到）
-		auto itFind = FindSection(vGreedyOccupiedArray, sec.szBeg);//找到第一个后向元素
-
-		//在后向元素之前插入区间
-		return vGreedyOccupiedArray.insert(itFind, std::forward<T>(sec));
-	};
-
-	//进行贪心抢占
-	//对于每个家族来说，首先遍历家族成员，在区间抢占排序列表查找碰撞
-	//如果出现碰撞则淘汰对应元素，并在临时列表中保留未碰撞的元素，
-	//如果最终保留元素的数量至少大于要求K次，那么家族符合贪心要求
-	//加入占座列表并抢占空位，然后处理下一家族
-
-	//在这里，newGreedyRepPrep以按照贪心筛选规则进行排序，按序遍历并依次贪心即可获取目标结果
-	std::vector<Section> vTempIndexList;//用于临时保存符合要求的家族成员范围，可复用
-	SuffixArray::RepeatFragmentList newGreedyRep;//贪心结果
-	for (const auto &it : newGreedyRepPrep)
-	{
-		vTempIndexList.clear();//清空
-		for (const auto &it2 : it.vStartIndices)
-		{
-			Section newSec{ .szBeg = it2, .szEnd = it2 + it.szPrefixLength };
-
-			//碰撞，跳过
-			if (IsSectionCollision(vGreedyOccupiedArray, newSec))
-			{
-				continue;
-			}
-
-			vTempIndexList.push_back(std::move(newSec));//仅保留未碰撞
-		}
-
-		//现在已经筛选出未碰撞的所有成员，检测剩余成员数量是否符合要求
-		if (vTempIndexList.size() < REP_SUBSTR_MIN_COUNT)
-		{
-			continue;//跳过（删除整个家族）
-		}
-
-		//否则保留家族
-		//先插入长度
-		auto &vNewStartIndices = newGreedyRep.emplace_back(it.szPrefixLength, SuffixArray::ValueList<size_t>{}).vStartIndices;
-		vNewStartIndices.reserve(vTempIndexList.size());//提前扩容
-
-		//成功，那么依序插入原始列表
-		for (auto &it2 : vTempIndexList)
-		{
-			vNewStartIndices.emplace_back(it2.szBeg);//这里的big就是刚才初始化的it.vStartIndices元素
-			InsertSection(vGreedyOccupiedArray, std::move(it2));//移动转移所有权
-		}
-	}
 
 	//贪心完成，newGreedyRep存储所需内容
 	repPrint(newGreedyRep, vInput, "[Greedy algorithm]");

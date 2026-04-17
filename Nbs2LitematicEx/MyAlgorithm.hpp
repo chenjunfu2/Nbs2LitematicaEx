@@ -580,6 +580,249 @@ public:
 };
 
 
+class GreedyAlgorithm
+{
+	GreedyAlgorithm(void) = delete;
+	~GreedyAlgorithm(void) = delete;
+
+public:
+	struct GreedySectionOccupiedArray
+	{
+	public:
+		//区间（左闭右开）
+		struct Section
+		{
+			size_t szBeg;//包含
+			size_t szEnd;//不包含
+		};
+
+		using SectionList = std::vector<Section>;
+
+	public:
+		SectionList listSection;
+
+	public:
+		//查找第一个大于szSecStart的区间起始迭代器
+		SectionList::iterator FindSection(size_t szSecStart)
+		{
+			return std::upper_bound(listSection.begin(), listSection.end(), szSecStart,
+				[](size_t szSecStart, const Section &info) -> bool
+				{
+					return szSecStart < info.szBeg;
+				}
+			);
+		}
+
+		//查找第一个大于szSecStart的区间起始迭代器
+		SectionList::const_iterator FindSection(size_t szSecStart) const
+		{
+			return std::upper_bound(listSection.begin(), listSection.end(), szSecStart,
+				[](size_t szSecStart, const Section &info) -> bool
+				{
+					return szSecStart < info.szBeg;
+				}
+			);
+		}
+
+		//判断区间是否出现碰撞，是返回true否则false
+		bool IsSectionCollision(const Section &sec) const
+		{
+			//二分查找，vGreedyOccupiedArray使用区间起始进行排序，且保证区间末尾至少小等于下一个区间起始（左闭右开保证区间末尾无法取到）
+			auto itFind = FindSection(sec.szBeg);//找到第一个后向元素
+
+			//如果是头部，那么没有前向判断，否则判断前向区间
+			if (itFind != listSection.begin())
+			{
+				auto itForward = itFind - 1;
+				if (sec.szBeg < itForward->szEnd)//可以等于（因为可取，如果小于则区间碰撞）
+				{
+					return true;
+				}
+			}
+
+			//如果是末尾，那么没有后向判断，否则判断后向区间
+			if (itFind != listSection.end())//当前Find其实就是后向位置（第一个大于前向begin的元素）
+			{
+				const auto &itBackward = itFind;
+				if (sec.szEnd > itBackward->szBeg)//可以等于（因为可取）
+				{
+					return true;
+				}
+			}
+
+			//都未碰撞，返回false
+			return false;
+		}
+
+		//此api调用需要保证：先进性过碰撞判断，确保无碰撞再插入，否则行为未定义
+		SectionList::iterator InsertSection(Section &&sec)
+		{
+			//二分查找，vGreedyOccupiedArray使用区间起始进行排序，且保证区间末尾至少小等于下一个区间起始（左闭右开保证区间末尾无法取到）
+			auto itFind = FindSection(sec.szBeg);//找到第一个后向元素
+
+			//在后向元素之前插入区间
+			return listSection.insert(itFind, std::move(sec));
+		}
+
+		//此api调用需要保证：先进性过碰撞判断，确保无碰撞再插入，否则行为未定义
+		SectionList::iterator InsertSection(const Section &sec)
+		{
+			//二分查找，vGreedyOccupiedArray使用区间起始进行排序，且保证区间末尾至少小等于下一个区间起始（左闭右开保证区间末尾无法取到）
+			auto itFind = FindSection(sec.szBeg);//找到第一个后向元素
+
+			//在后向元素之前插入区间
+			return listSection.insert(itFind, sec);
+		}
+	};
+
+public:
+	//贪心查找不重叠集合：
+	//对于每一个家族（小集合）内部的多个重复序列，先进行一次顺序贪心（集合本身需要按照索引顺序排序）
+	//内部贪心因为是定长关系，可以直接根据起始索引差小于长度，直接排除重叠且不需要的子序列
+	//然后对每个家族之间的重复序列进行全量长度排序，再进行一次完整的贪心，求出最终的不重叠循环串集合
+	//对于最终的全量家族之间的贪心来说，如果某个家族因为被其它家族挤占生存空间而完全淘汰，
+	//那么应该回滚贪心数组中被淘汰家族占用的位置以便其它家族抢占
+
+	//使用区间二分进行贪心占座
+	//首先按照L*k -> K -> L降序排序家族
+	//然后进行贪心抢占
+	//对于每个家族来说，首先遍历家族成员，在区间抢占排序列表查找碰撞
+	//如果出现碰撞则淘汰对应元素，并在临时列表中保留未碰撞的元素，
+	//如果最终保留元素的数量至少大于要求K次，那么家族符合贪心要求
+	//加入占座列表并抢占空位，然后处理下一家族
+
+	//对每个Fragment内的vStartIndices进行贪心区间排重
+	static SuffixArray::RepeatFragmentList GreedyNonOverlapPerFragment(const SuffixArray::RepeatFragmentList &listRepeatFragment, size_t szMinRepeatCount)
+	{
+		if (szMinRepeatCount < 2)//小于2个重复没有计算必要
+		{
+			return {};
+		}
+
+		SuffixArray::RepeatFragmentList listGreedyRepeatFragment;//贪心结果
+		for (const auto &it : listRepeatFragment)
+		{
+			if (it.vStartIndices.size() < szMinRepeatCount)//至少szMinRepeatCount个元素才有筛选必要
+			{
+				continue;//直接丢弃
+			}
+
+			//拷贝并排序
+			std::vector<size_t> vSortStartIndices = it.vStartIndices;
+			std::ranges::sort(vSortStartIndices, std::less<>());//索引升序
+
+			//预分配贪心筛选结果数组
+			std::vector<size_t> vNewStartIndices;
+			vNewStartIndices.reserve(vSortStartIndices.size());
+
+			size_t szLastIndex = vSortStartIndices.front();//贪心起始选择开头
+			vNewStartIndices.emplace_back(szLastIndex);//先行插入
+
+			for (size_t i = 1; i < vSortStartIndices.size(); ++i)//从第二个开始比较
+			{
+				auto &szCurIndex = vSortStartIndices[i];
+
+				if (szCurIndex - szLastIndex < it.szPrefixLength)//发生碰撞，差值小于长度
+				{
+					continue;//跳过并丢弃
+				}
+				
+				//否则更新并插入
+				szLastIndex = szCurIndex;
+				vNewStartIndices.emplace_back(szLastIndex);
+			}
+
+			//检测剩余数量是否符合要求
+			if (vNewStartIndices.size() < szMinRepeatCount)
+			{
+				continue;//不符合要求，去除
+			}
+
+			//否则插入
+			listGreedyRepeatFragment.emplace_back(it.szPrefixLength, std::move(vNewStartIndices));
+		}
+
+		return listGreedyRepeatFragment;
+	}
+
+	//默认排序函数：按照L*k -> K -> L降序排序家族
+	static bool DefaultGreedySort(const SuffixArray::RepeatFragment &l, const SuffixArray::RepeatFragment &r)
+	{
+		size_t szLeftWeight = l.szPrefixLength * l.vStartIndices.size();
+		size_t szRightWeight = r.szPrefixLength * r.vStartIndices.size();
+
+		if (auto cmp = szLeftWeight <=> szRightWeight; cmp != 0)
+		{
+			return cmp > 0;
+		}
+		else if (auto cmp = l.vStartIndices.size() <=> r.vStartIndices.size(); cmp != 0)
+		{
+			return cmp > 0;
+		}
+		else
+		{
+			return l.szPrefixLength > r.szPrefixLength;
+		}
+	}
+
+	template<typename SortFunc_T = decltype(DefaultGreedySort)>
+	static void GreedySortFragments(SuffixArray::RepeatFragmentList &listRepeatFragment, SortFunc_T funcSort = DefaultGreedySort)
+	{
+		std::ranges::sort(listRepeatFragment, funcSort);
+	}
+
+	static SuffixArray::RepeatFragmentList GreedyNonOverlapAcrossFragments(const SuffixArray::RepeatFragmentList &listRepeatFragment, size_t szMinRepeatCount)
+	{
+		if (szMinRepeatCount < 2)//小于2个重复没有计算必要
+		{
+			return {};
+		}
+
+		GreedySectionOccupiedArray arrayGreedySectionOccupied{};//区间抢占排序数组
+		GreedySectionOccupiedArray::SectionList listTempSection;//临时区间列表
+		
+		//在这里按照贪心筛选规则进行排序，按序遍历并依次贪心即可获取目标结果
+		SuffixArray::RepeatFragmentList listGreedyRepeatFragment;//贪心结果
+		for (const auto &it : listRepeatFragment)
+		{
+			listTempSection.clear();//清空
+
+			//遍历并进行碰撞判断
+			for (const auto &it2 : it.vStartIndices)
+			{
+				GreedySectionOccupiedArray::Section newSec{ .szBeg = it2, .szEnd = it2 + it.szPrefixLength };
+
+				//碰撞，跳过
+				if (arrayGreedySectionOccupied.IsSectionCollision(newSec))
+				{
+					continue;
+				}
+
+				listTempSection.push_back(std::move(newSec));//仅保留未碰撞
+			}
+
+			//现在已经筛选出未碰撞的所有成员，检测剩余成员数量是否符合要求
+			if (listTempSection.size() < szMinRepeatCount)
+			{
+				continue;//跳过（删除整个家族）
+			}
+
+			//保留家族
+			//先插入长度
+			auto &vNewStartIndices = listGreedyRepeatFragment.emplace_back(it.szPrefixLength, SuffixArray::ValueList<size_t>{}).vStartIndices;
+			vNewStartIndices.reserve(listTempSection.size());//提前扩容
+
+			//依序插入返回列表和碰撞判断列表
+			for (auto &it2 : listTempSection)
+			{
+				vNewStartIndices.emplace_back(it2.szBeg);//这里的big就是刚才初始化的it.vStartIndices元素
+				arrayGreedySectionOccupied.InsertSection(std::move(it2));//移动转移所有权
+			}
+		}
+
+		return listGreedyRepeatFragment;
+	}
+};
 
 /*
 输入字符串: "ababac"
@@ -625,13 +868,4 @@ std::vector<size_t> ComputePartialMatch(const std::vector<T> &vInput)
 
 	return vPartialMatch;
 }
-
-
-
-
-
-
-
-
-
 
