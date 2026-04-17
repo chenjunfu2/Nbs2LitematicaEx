@@ -481,9 +481,13 @@ re_try:
 	print("=========================================\n[CheckPeriodicity]\n");
 	for (auto &it : newGreedyRep)
 	{
-		auto PmArray = PeriodicityDetector::ComputePartialMatch<size_t>(it.vStartIndices);
-		auto szPeriodLength = PeriodicityDetector::CheckPeriodicity<size_t>(it.vStartIndices, PmArray);
+		const std::span<const uint8_t> viewInput = { &vInput[it.vStartIndices.front()], it.szPrefixLength };
 
+		//对原始输入数组的部分进行查重判断
+		auto PmArray = PeriodicityDetector::ComputePartialMatch(viewInput);
+		auto szPeriodLength = PeriodicityDetector::CheckPeriodicity(viewInput, PmArray);
+
+		//出现自循环
 		if (szPeriodLength != 0)
 		{
 			print("\nperiod: [{}]\nval({}):", szPeriodLength, it.szPrefixLength);
@@ -492,9 +496,9 @@ re_try:
 				print("[NULL]\n");
 				continue;
 			}
-			for (size_t i = it.vStartIndices.front(), end = i + it.szPrefixLength; i < end; ++i)
+			for (const auto &it : viewInput)
 			{
-				putchar((uint32_t)IndexMapToOutput(vInput[i]));
+				putchar((uint32_t)IndexMapToOutput(it));
 			}
 			putchar('\n');
 		}
