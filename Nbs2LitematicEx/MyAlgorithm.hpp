@@ -618,7 +618,7 @@ public:
 			//只取其中一个重复序列判断（因为都一样，取第一即可）
 			for (size_t i = szFirstSubStrStart, end = i + it.szPrefixLength; i < end; ++i)
 			{
-				if (funcTrim(i - 1))//需要去除
+				if (funcTrim(i))//需要去除
 				{
 					++szFrontBlankLength;
 				}
