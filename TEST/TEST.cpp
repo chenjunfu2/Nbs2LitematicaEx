@@ -455,7 +455,7 @@ re_try:
 
 	
 	auto newRep = FragmentTrimmer::TrimBoundaries(rep, REP_SUBSTR_MIN_COUNT,
-		[&vInput](size_t szIndex)->bool
+		[&vInput](size_t szIndex) -> bool
 		{
 			return vInput[szIndex] < 10;
 		}

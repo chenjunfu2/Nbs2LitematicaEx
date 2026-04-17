@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <ranges>
 #include <compare>
+#include <span>
 
 #include <vector>
 #include <unordered_map>
@@ -384,7 +385,7 @@ int main(int argc, char *argv[]) try
 		it.Print();
 	}
 
-	//	print("\n==========================================\n\n");
+//	print("\n==========================================\n\n");
 	//
 	//	//拆分为排序序列，同tick音符合并，跨tick音符转为静音tick
 	//	auto listNoteSub = ToMyNoteSubList(noteList);
@@ -437,97 +438,51 @@ int main(int argc, char *argv[]) try
 	//		print("------------------------------------------\n\n");
 	//	}
 
-		//从音符列表挨个生成
-//	auto mapInst = ToInstMap(noteList);
-//	for (auto &it : mapInst)
-//	{
-//		auto listNoteSub = ToMyNoteSubList(it);
-//		NoteVal valNote = ToNoteVal(listNoteSub);
-//		auto sahi = NoteValToSAHI(valNote);
-//		//auto listRepeatSubNote = FindLongestNonOverlapRepeats(sahi, valNote);
-//
-//		print("------------------------------------------\nInst: [{}], Count: [{}]\n", it.front().instrument, it.size());
-//
-//		auto repFind = RepetitionPatternFinder::findRepeatingPatterns(
-//			valNote.listEncodeNoteSub,
-//			sahi.SuffArr,
-//			sahi.HighArr,
-//			RepetitionPatternFinder::computeScores,
-//			[&valNote](const std::vector<size_t> &listInput, size_t index) -> bool//返回true筛选掉
-//			{
-//				size_t szEncodeNote = listInput[index];
-//				return valNote.listNoteSubMap[szEncodeNote].enType == MyNoteSub::Type::Blank;
-//			}
-//		);
-//
-//		for (const auto &rep : repFind)
-//		{
-//			print("------------------------------------------\nsub length: [{}]\npos: ", rep.length);
-//			for (size_t pos : rep.occurrences)
-//			{
-//				print("[{}],", pos);
-//			}
-//			print("\nnotes:\n");
-//			for (auto &note : rep.content)
-//			{
-//				valNote.listNoteSubMap[note].Print();
-//			}
-//		}
 
-		// 输出结果（解码后的实际内容）
-		//for (const auto &sub : listRepeatSubNote)
-		//{
-		//	print("------------------------------------------\nsub length: [{}]\npos: ", sub.length);
-		//	for (size_t pos : sub.occurrences)
-		//	{
-		//		print("[{}],", pos);
-		//	}
-		//	print("\n");
-		//
-		//	// 输出实际内容（解码）
-		//	print("notes:\n");
-		//	for (auto &note : sub.content)
-		//	{
-		//		note.Print();
-		//	}
-		//}
-//		print("------------------------------------------\n\n");
-//	}
+#define REP_SUBSTR_MIN_LENGTH 3
+#define REP_SUBSTR_MIN_COUNT 3
 
-
+	//从音符列表挨个生成
+	auto mapInst = ToInstMap(noteList);
+	for (auto &it : mapInst)
+	{
+		auto listNoteSub = ToMyNoteSubList(it);
+		NoteVal valNote = ToNoteVal(listNoteSub);
+		auto sahi = NoteValToSAHI(valNote);
+	
+		print("------------------------------------------\nInst: [{}], Count: [{}]\n", it.front().instrument, it.size());
 	
 
+		auto listRepeats = SuffixArray::AggregateMaximalRepeats(sahi.SuffArr, sahi.HighArr, REP_SUBSTR_MIN_LENGTH);
+		listRepeats = FragmentTrimmer::TrimBoundaries(listRepeats, REP_SUBSTR_MIN_COUNT,
+			[&valNote](size_t szIndex) -> bool//返回true筛选掉
+			{
+				size_t szEncodeNote = valNote.listEncodeNoteSub[szIndex];//下标查找编码数组
+				//查找原数组
+				return valNote.listNoteSubMap[szEncodeNote].enType == MyNoteSub::Type::Blank;
+			}
+		);
 
+		listRepeats = GreedyAlgorithm::GreedyNonOverlapPerFragment(listRepeats, REP_SUBSTR_MIN_COUNT);;
+		GreedyAlgorithm::GreedySortFragments(listRepeats, GreedyAlgorithm::DefaultGreedySort);
+		listRepeats = GreedyAlgorithm::GreedyNonOverlapAcrossFragments(listRepeats, REP_SUBSTR_MIN_COUNT);
+	
+		for (const auto &rep : listRepeats)
+		{
+			print("------------------------------------------\nsub length: [{}]\npos({}): ", rep.szPrefixLength, rep.vStartIndices.size());
+			for (size_t pos : rep.vStartIndices)
+			{
+				print("[{}],", pos);
+			}
+			print("\nnotes:\n");
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+			// 输出实际内容（解码）
+			const std::span<const size_t> viewNotes = { &valNote.listEncodeNoteSub[rep.vStartIndices.front()],rep.szPrefixLength };
+			for (auto &note : viewNotes)
+			{
+				valNote.listNoteSubMap[note].Print();
+			}
+		}
 
 	return 0;
 }
