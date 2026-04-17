@@ -360,8 +360,8 @@ public:
 
 SAHI NoteValToSAHI(const NoteVal &valNote)
 {
-	auto ret = SuffixArray::DoublingCountingRadixSortSuffixArray(valNote.listNoteSubMap.size(), valNote.listEncodeNoteSub);
-	auto ret2 = SuffixArray::LcpHeightArray(valNote.listEncodeNoteSub, ret);
+	auto ret = SuffixArray::DoublingCountingRadixSortSuffixArray<size_t>(valNote.listEncodeNoteSub, valNote.listNoteSubMap.size());
+	auto ret2 = SuffixArray::LcpHeightArray<size_t>(valNote.listEncodeNoteSub, ret);
 	return SAHI
 	{
 		.SuffArr = std::move(ret.vSuffixArray),

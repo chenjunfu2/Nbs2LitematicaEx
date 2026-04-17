@@ -45,7 +45,7 @@ public:
 	using ValueList = std::vector<T>;
 
 	template<typename T>
-	using ValueView = std::span<T>;
+	using ValueView = std::span<const T>;
 	
 	struct ValueListPair
 	{
@@ -942,7 +942,7 @@ public:
 		PM表:	0  0  1  2  3  0
 	*/
 	template<typename T>
-	static std::vector<size_t> ComputePartialMatch(const std::span<T> &vInputArr)
+	static std::vector<size_t> ComputePartialMatch(const std::span<const T> &vInputArr)
 	{
 		size_t szInputSize = vInputArr.size();
 		std::vector<size_t> vPartialMatch;
@@ -980,7 +980,7 @@ public:
 
 	//返回循环周期长度，如果为0，则串不循环
 	template<typename T>
-	static size_t CheckPeriodicity(const std::span<T> &vInputArr, const std::vector<size_t> &vPartialMatch)
+	static size_t CheckPeriodicity(const std::span<const T> &vInputArr, const std::vector<size_t> &vPartialMatch)
 	{
 		size_t szInputLength = vInputArr.size();
 		if (szInputLength < 2)//单字符或空不算周期
