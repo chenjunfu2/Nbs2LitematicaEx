@@ -824,48 +824,79 @@ public:
 	}
 };
 
-/*
-输入字符串: "ababac"
-计算得到的 PM表 (π数组):
 
-索引:	0  1  2  3  4  5
-字符:	a  b  a  b  a  c
-PM表:	0  0  1  2  3  0
-*/
-template<typename T>
-std::vector<size_t> ComputePartialMatch(const std::vector<T> &vInput)
+class PeriodicityDetector
 {
-	size_t szInputSize = vInput.size();
-	std::vector<size_t> vPartialMatch;
-	vPartialMatch.reserve(szInputSize);
+	PeriodicityDetector(void) = delete;
+	~PeriodicityDetector(void) = delete;
 
-	vPartialMatch.push_back(0);//vPartialMatch[0] = 0;
-	for (size_t szIndex = 1; szIndex < szInputSize; ++szIndex)
+public:
+	/*
+		输入字符串: "ababac"
+		计算得到的 PM表 (π数组):
+		索引:	0  1  2  3  4  5
+		字符:	a  b  a  b  a  c
+		PM表:	0  0  1  2  3  0
+	*/
+	template<typename T>
+	static std::vector<size_t> ComputePartialMatch(const std::vector<T> &vInput)
 	{
-		//获取当前的前缀长度
-		size_t szPrefixLength = vPartialMatch[szIndex - 1];
+		size_t szInputSize = vInput.size();
+		std::vector<size_t> vPartialMatch;
+		vPartialMatch.reserve(szInputSize);
 
-		//只要还有候选前缀，且当前字符比对失败，就不断缩短前缀重试
-		while (szPrefixLength > 0 && vInput[szIndex] != vInput[szPrefixLength])
+		vPartialMatch.push_back(0);//vPartialMatch[0] = 0;
+		for (size_t szIndex = 1; szIndex < szInputSize; ++szIndex)
 		{
-			//这里事实上相当于把当前匹配的长度-1作为前半段（前缀）的下标，
-			//获取上一个匹配的序列中的前半部分，因为vPartialMatch有
-			//递归自相似性，所以这个操作相当于把最后一个不匹配的字符
-			//移动到前面匹配的位置的后一位进行匹配，并查找是否可以在
-			//更短的前半模式串中得到当前字符可以组成的前后缀。
-			szPrefixLength = vPartialMatch[szPrefixLength - 1];
+			//获取当前的前缀长度
+			size_t szPrefixLength = vPartialMatch[szIndex - 1];
+
+			//只要还有候选前缀，且当前字符比对失败，就不断缩短前缀重试
+			while (szPrefixLength > 0 && vInput[szIndex] != vInput[szPrefixLength])
+			{
+				//这里事实上相当于把当前匹配的长度-1作为前半段（前缀）的下标，
+				//获取上一个匹配的序列中的前半部分，因为vPartialMatch有
+				//递归自相似性，所以这个操作相当于把最后一个不匹配的字符
+				//移动到前面匹配的位置的后一位进行匹配，并查找是否可以在
+				//更短的前半模式串中得到当前字符可以组成的前后缀。
+				szPrefixLength = vPartialMatch[szPrefixLength - 1];
+			}
+
+			//新的字符相等，那么增加前缀
+			if (vInput[szIndex] == vInput[szPrefixLength])
+			{
+				++szPrefixLength;
+			}
+
+			//加入新的前缀长度
+			vPartialMatch.push_back(szPrefixLength);//vPartialMatch[szIndex] = szPrefixLength;
 		}
 
-		//新的字符相等，那么增加前缀
-		if (vInput[szIndex] == vInput[szPrefixLength])
-		{
-			++szPrefixLength;
-		}
-
-		//加入新的前缀长度
-		vPartialMatch.push_back(szPrefixLength);//vPartialMatch[szIndex] = szPrefixLength;
+		return vPartialMatch;
 	}
 
-	return vPartialMatch;
-}
+	//返回循环周期长度，如果为0，则串不循环
+	template<typename T>
+	size_t CheckPeriodicity(const std::vector<T> &vInput, const std::vector<size_t> &vPartialMatch)
+	{
+		size_t szInputLength = vInput.size();
+		if (szInputLength < 2)//单字符或空不算周期
+		{
+			return 0;
+		} 
 
+		//最长循环真前后缀子串长度
+		size_t szOverlapLength = vPartialMatch.back();
+
+		//周期长度
+		size_t szPeriodLength = szInputLength - szOverlapLength;
+
+		// 判定条件
+		if (szOverlapLength > 0 && szInputLength % szPeriodLength == 0)
+		{
+			return szPeriodLength;
+		}
+
+		return 0;
+	}
+};
