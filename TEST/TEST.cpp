@@ -478,7 +478,7 @@ re_try:
 
 	//字符串完美周期性检测与字符串单一字符组成检测
 	//对贪心完成的每个数组进行检测
-	print("=========================================\n[CheckPeriodicity]");
+	print("=========================================\n[CheckPeriodicity]\n");
 	for (auto &it : newGreedyRep)
 	{
 		auto PmArray = PeriodicityDetector::ComputePartialMatch(it.vStartIndices);
