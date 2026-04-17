@@ -796,7 +796,7 @@ public:
 		}
 		else
 		{
-			auto cmpFrequency = l.vStartIndices.size() > r.vStartIndices.size();
+			auto cmpFrequency = l.vStartIndices.size() <=> r.vStartIndices.size();
 			return cmpFrequency > 0;
 		}
 	}
