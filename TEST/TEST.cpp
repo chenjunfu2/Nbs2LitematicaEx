@@ -746,3 +746,44 @@ re_try:
 	return 0;
 }
 
+/*
+输入字符串: "ababac"
+计算得到的 PM表 (π数组):
+
+索引:	0  1  2  3  4  5
+字符:	a  b  a  b  a  c
+PM表:	0  0  1  2  3  0
+*/
+template<typename T>
+std::vector<size_t> ComputePartialMatch(const std::vector<T> &vInput)
+{
+	size_t szInputSize = vInput.size();
+	std::vector<size_t> vPartialMatch;
+	vPartialMatch.reserve(szInputSize);
+
+	vPartialMatch.push_back(0);//vPartialMatch[0] = 0;
+	for (size_t szIndex = 1; szIndex < szInputSize; ++szIndex)
+	{
+		//获取当前的前缀长度
+		size_t szPrefixLength = vPartialMatch[szIndex - 1];
+
+		//只要还有候选前缀，且当前字符比对失败，就不断缩短前缀重试
+		while (szPrefixLength > 0 && vInput[szIndex] != vInput[szPrefixLength])
+		{
+			szPrefixLength = vPartialMatch[szPrefixLength - 1];
+		}
+		
+		//新的字符相等，那么增加前缀
+		if (vInput[szIndex] == vInput[szPrefixLength])
+		{
+			++szPrefixLength;
+		}
+
+		//加入新的前缀长度
+		vPartialMatch.push_back(szPrefixLength);//vPartialMatch[szIndex] = szPrefixLength;
+	}
+
+	return vPartialMatch;
+}
+
+
