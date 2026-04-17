@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <vector>
+#include <span>
 #include <ranges>
 #include <algorithm>
 #include <numeric>
@@ -40,6 +41,9 @@ static void PrintArr(const char *pArrName, size_t *pArr, size_t szArrLength)
 public:
 	template<typename T>
 	using ValueList = std::vector<T>;
+
+	template<typename T>
+	using ValueView = std::span<T>;
 	
 	struct ValueListPair
 	{
@@ -59,7 +63,7 @@ public:
 	//返回值为排序在vSortArr中的下标，所以是size_t
 	template<typename T>
 	requires(std::is_integral_v<T> && std::is_unsigned_v<T> && sizeof(T) <= sizeof(size_t))
-	static ValueListPair DoublingCountingRadixSortSuffixArray(size_t szArrValueRange, const ValueList<T> &vInputArr)//szArrValueRange是上边界，无法取到
+	static ValueListPair DoublingCountingRadixSortSuffixArray(const ValueView<T> &vInputArr, size_t szArrValueRange)//szArrValueRange是上边界，无法取到
 	{
 		//拒绝空值
 		if (vInputArr.empty() || szArrValueRange == 0)
@@ -260,7 +264,7 @@ public:
 	
 	template<typename T>
 	requires(std::is_integral_v<T> &&std::is_unsigned_v<T> && sizeof(T) <= sizeof(size_t))
-	static ValueList<size_t> LcpHeightArray(const ValueList<T> &vInputArr, const ValueListPair &vlp)
+	static ValueList<size_t> LcpHeightArray(const ValueView<T> &vInputArr, const ValueListPair &vlp)
 	{
 		if (vInputArr.empty())
 		{
@@ -930,9 +934,9 @@ public:
 		PM表:	0  0  1  2  3  0
 	*/
 	template<typename T>
-	static std::vector<size_t> ComputePartialMatch(const std::vector<T> &vInput)
+	static std::vector<size_t> ComputePartialMatch(const std::span<T> &vInputArr)
 	{
-		size_t szInputSize = vInput.size();
+		size_t szInputSize = vInputArr.size();
 		std::vector<size_t> vPartialMatch;
 		vPartialMatch.reserve(szInputSize);
 
@@ -943,7 +947,7 @@ public:
 			size_t szPrefixLength = vPartialMatch[szIndex - 1];
 
 			//只要还有候选前缀，且当前字符比对失败，就不断缩短前缀重试
-			while (szPrefixLength > 0 && vInput[szIndex] != vInput[szPrefixLength])
+			while (szPrefixLength > 0 && vInputArr[szIndex] != vInputArr[szPrefixLength])
 			{
 				//这里事实上相当于把当前匹配的长度-1作为前半段（前缀）的下标，
 				//获取上一个匹配的序列中的前半部分，因为vPartialMatch有
@@ -954,7 +958,7 @@ public:
 			}
 
 			//新的字符相等，那么增加前缀
-			if (vInput[szIndex] == vInput[szPrefixLength])
+			if (vInputArr[szIndex] == vInputArr[szPrefixLength])
 			{
 				++szPrefixLength;
 			}
@@ -968,9 +972,9 @@ public:
 
 	//返回循环周期长度，如果为0，则串不循环
 	template<typename T>
-	static size_t CheckPeriodicity(const std::vector<T> &vInput, const std::vector<size_t> &vPartialMatch)
+	static size_t CheckPeriodicity(const std::span<T> &vInputArr, const std::vector<size_t> &vPartialMatch)
 	{
-		size_t szInputLength = vInput.size();
+		size_t szInputLength = vInputArr.size();
 		if (szInputLength < 2)//单字符或空不算周期
 		{
 			return 0;

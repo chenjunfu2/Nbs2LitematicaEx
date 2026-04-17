@@ -396,8 +396,8 @@ re_try:
 	print("=========================================\n");
 
 	//读取完成，进行计算
-	auto sa_rk = SuffixArray::DoublingCountingRadixSortSuffixArray(10 + 26, vInput);
-	auto lcph = SuffixArray::LcpHeightArray(vInput, sa_rk);
+	auto sa_rk = SuffixArray::DoublingCountingRadixSortSuffixArray<uint8_t>(vInput, 10 + 26);
+	auto lcph = SuffixArray::LcpHeightArray<uint8_t>(vInput, sa_rk);
 
 	MyAssert(sa_rk.vSuffixArray.size() == sa_rk.vRank.size());
 	MyAssert(sa_rk.vSuffixArray.size() == lcph.size());
@@ -481,8 +481,8 @@ re_try:
 	print("=========================================\n[CheckPeriodicity]\n");
 	for (auto &it : newGreedyRep)
 	{
-		auto PmArray = PeriodicityDetector::ComputePartialMatch(it.vStartIndices);
-		auto szPeriodLength = PeriodicityDetector::CheckPeriodicity(it.vStartIndices, PmArray);
+		auto PmArray = PeriodicityDetector::ComputePartialMatch<size_t>(it.vStartIndices);
+		auto szPeriodLength = PeriodicityDetector::CheckPeriodicity<size_t>(it.vStartIndices, PmArray);
 
 		if (szPeriodLength != 0)
 		{
