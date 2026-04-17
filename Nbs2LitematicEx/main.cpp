@@ -385,58 +385,58 @@ int main(int argc, char *argv[]) try
 		it.Print();
 	}
 
-//	print("\n==========================================\n\n");
-	//
-	//	//拆分为排序序列，同tick音符合并，跨tick音符转为静音tick
-	//	auto listNoteSub = ToMyNoteSubList(noteList);
-	//	for (auto &it : listNoteSub)
-	//	{
-	//		it.Print();
-	//	}
-	//
 	//	print("\n==========================================\n\n");
-	//
-	//	//后缀数组sa+LCP查找所有重复子串，使用贪心匹配最大不重叠子串集合，相似性匹配递归找变化子序列
-	//	//根据集合完成重复序列收集
-	//	//目前考虑算法先对完整组做一次，再对每个乐器分组做一次，最后分别输出
-	//
-	//	//首先，对每个音符、空白音符做唯一值ID映射，映射为一段连续的值域
-	//	//通过unordered map进行查重和下标映射，vector对应下标存储具体音符值
-	//	NoteVal valNote = ToNoteVal(listNoteSub);
-	//
-	//	//后缀数组：https://oi-wiki.org/string/sa/
-	//	//SA-IS：https://www.luogu.com.cn/article/eugf8e8y
-	//
-	//	//先实现基础版本，后续再考虑是否优化SA-IS
-	//
-	//	//在这里，NoteVal存储离散化的双向映射
-	//	//从0~valNote.listNoteSubMap.size()即为值域大小
-	//	//根据值域选择使用的算法（较小使用基数计数排序，较大使用普通排序）
-	//
-	//	auto sahi = NoteValToSAHI(valNote);
-	//
-	//	auto listRepeatSubNote = RepeatSubNoteFinder::FindAll(valNote, sahi);
-	//
-	//	// 输出结果（解码后的实际内容）
-	//	for (const auto &sub : listRepeatSubNote)
-	//	{
-	//		print("------------------------------------------\nsub length: [{}]\npos: ", sub.length);
-	//		for (size_t pos : sub.occurrences)
-	//		{
-	//			print("[{}],", pos);
-	//		}
-	//		print("\n");
-	//
-	//		// 输出实际内容（解码）
-	//		print("notes:\n");
-	//		for (size_t j = sub.start; j < sub.start + sub.length; ++j)
-	//		{
-	//			size_t encodeVal = valNote.listEncodeNoteSub[j];
-	//			const auto &note = valNote.listNoteSubMap[encodeVal];
-	//			note.Print();
-	//		}
-	//		print("------------------------------------------\n\n");
-	//	}
+		//
+		//	//拆分为排序序列，同tick音符合并，跨tick音符转为静音tick
+		//	auto listNoteSub = ToMyNoteSubList(noteList);
+		//	for (auto &it : listNoteSub)
+		//	{
+		//		it.Print();
+		//	}
+		//
+		//	print("\n==========================================\n\n");
+		//
+		//	//后缀数组sa+LCP查找所有重复子串，使用贪心匹配最大不重叠子串集合，相似性匹配递归找变化子序列
+		//	//根据集合完成重复序列收集
+		//	//目前考虑算法先对完整组做一次，再对每个乐器分组做一次，最后分别输出
+		//
+		//	//首先，对每个音符、空白音符做唯一值ID映射，映射为一段连续的值域
+		//	//通过unordered map进行查重和下标映射，vector对应下标存储具体音符值
+		//	NoteVal valNote = ToNoteVal(listNoteSub);
+		//
+		//	//后缀数组：https://oi-wiki.org/string/sa/
+		//	//SA-IS：https://www.luogu.com.cn/article/eugf8e8y
+		//
+		//	//先实现基础版本，后续再考虑是否优化SA-IS
+		//
+		//	//在这里，NoteVal存储离散化的双向映射
+		//	//从0~valNote.listNoteSubMap.size()即为值域大小
+		//	//根据值域选择使用的算法（较小使用基数计数排序，较大使用普通排序）
+		//
+		//	auto sahi = NoteValToSAHI(valNote);
+		//
+		//	auto listRepeatSubNote = RepeatSubNoteFinder::FindAll(valNote, sahi);
+		//
+		//	// 输出结果（解码后的实际内容）
+		//	for (const auto &sub : listRepeatSubNote)
+		//	{
+		//		print("------------------------------------------\nsub length: [{}]\npos: ", sub.length);
+		//		for (size_t pos : sub.occurrences)
+		//		{
+		//			print("[{}],", pos);
+		//		}
+		//		print("\n");
+		//
+		//		// 输出实际内容（解码）
+		//		print("notes:\n");
+		//		for (size_t j = sub.start; j < sub.start + sub.length; ++j)
+		//		{
+		//			size_t encodeVal = valNote.listEncodeNoteSub[j];
+		//			const auto &note = valNote.listNoteSubMap[encodeVal];
+		//			note.Print();
+		//		}
+		//		print("------------------------------------------\n\n");
+		//	}
 
 
 #define REP_SUBSTR_MIN_LENGTH 3
@@ -449,9 +449,9 @@ int main(int argc, char *argv[]) try
 		auto listNoteSub = ToMyNoteSubList(it);
 		NoteVal valNote = ToNoteVal(listNoteSub);
 		auto sahi = NoteValToSAHI(valNote);
-	
+
 		print("------------------------------------------\nInst: [{}], Count: [{}]\n", it.front().instrument, it.size());
-	
+
 
 		auto listRepeats = SuffixArray::AggregateMaximalRepeats(sahi.SuffArr, sahi.HighArr, REP_SUBSTR_MIN_LENGTH);
 		listRepeats = FragmentTrimmer::TrimBoundaries(listRepeats, REP_SUBSTR_MIN_COUNT,
@@ -466,7 +466,7 @@ int main(int argc, char *argv[]) try
 		listRepeats = GreedyAlgorithm::GreedyNonOverlapPerFragment(listRepeats, REP_SUBSTR_MIN_COUNT);;
 		GreedyAlgorithm::GreedySortFragments(listRepeats, GreedyAlgorithm::DefaultGreedySort);
 		listRepeats = GreedyAlgorithm::GreedyNonOverlapAcrossFragments(listRepeats, REP_SUBSTR_MIN_COUNT);
-	
+
 		for (const auto &rep : listRepeats)
 		{
 			print("------------------------------------------\nsub length: [{}]\npos({}): ", rep.szPrefixLength, rep.vStartIndices.size());
@@ -483,6 +483,7 @@ int main(int argc, char *argv[]) try
 				valNote.listNoteSubMap[note].Print();
 			}
 		}
+	}
 
 	return 0;
 }
