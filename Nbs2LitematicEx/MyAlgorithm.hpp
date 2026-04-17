@@ -12,6 +12,7 @@
 #include <type_traits>
 #include <unordered_map>
 
+//后缀数组求解相关
 class SuffixArray
 {
 private:
@@ -583,6 +584,7 @@ public:
 	}
 };
 
+//片段头尾模式去除与筛选
 class FragmentTrimmer
 {
 	FragmentTrimmer(void) = delete;
@@ -676,6 +678,7 @@ public:
 	}
 };
 
+//贪心求不重叠
 class GreedyAlgorithm
 {
 	GreedyAlgorithm(void) = delete;
@@ -918,6 +921,7 @@ public:
 	}
 };
 
+//自循环判断
 class PeriodicityDetector
 {
 	PeriodicityDetector(void) = delete;
