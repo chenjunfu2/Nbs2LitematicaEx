@@ -1005,3 +1005,44 @@ public:
 	}
 };
 
+
+class SIATEC
+{
+	SIATEC(void) = delete;
+	~SIATEC(void) = delete;
+
+public:
+
+
+
+
+
+
+
+
+
+
+
+
+
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
