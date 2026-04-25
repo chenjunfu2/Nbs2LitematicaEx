@@ -213,7 +213,7 @@ int main2(void)
 #include <cstdint>
 #include <unordered_map>
 #include <vector>
-#include "..\Nbs2LitematicEx\MyAlgorithm.hpp"
+#include "../Nbs2LitematicEx/MyAlgorithm.hpp"
 
 int main()
 {
@@ -289,8 +289,8 @@ int main()
 */
 
 
-#include "..\Nbs2LitematicEx\MyAlgorithm.hpp"
-#include "..\Dependencies\util\MyAssert.hpp"
+#include "../Nbs2LitematicEx/MyAlgorithm.hpp"
+#include "../Dependencies/util/MyAssert.hpp"
 #include <stdio.h>
 #include <vector>
 #include <stdint.h>
