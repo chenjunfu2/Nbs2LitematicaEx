@@ -104,3 +104,4 @@ include_directories(
 #添加项目
 add_subdirectory(Nbs2LitematicEx)
 add_subdirectory(TEST)
+add_subdirectory(LitematicGenerator)
