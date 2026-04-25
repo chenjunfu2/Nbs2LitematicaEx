@@ -371,3 +371,7 @@ FodyWeavers.xsd
 # CMakeLists
 !CMakeLists.txt
 !**/CMakeLists.txt
+
+# clang-format
+!clang-format.txt
+!**/clang-format.txt
