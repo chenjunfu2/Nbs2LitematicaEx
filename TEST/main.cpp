@@ -403,7 +403,7 @@ re_try:
 
 	//根据sa_rk输出sa，一行一个
 	size_t szSize = sa_rk.vSuffixArray.size();
-	size_t szZeroPerfCount = (size_t)std::log10l((long double)szSize) + 1;
+	size_t szZeroPerfCount = (size_t)std::log10((long double)szSize) + 1;
 	print("size: {}\n", szSize);
 
 	print("[{:<{}}] ({:<{}} - {:<{}}): {:<{}}\n", "i", szZeroPerfCount, "SA", szZeroPerfCount, "Hi", szZeroPerfCount, "Suffix", szZeroPerfCount);
