@@ -111,10 +111,10 @@ int main(int argc, char *argv[]) try
 			}
 			else if (note.enType == MyNote2::Type::Blank)
 			{
-#if defined(NO_REPEATER) && defined(MATRIX_GEN)
+#if !defined(NO_REPEATER) || !defined(MATRIX_GEN)
 				szLineLong += note.tick;//nbs中的tick是redstone tick
 #else
-				szLineLong += note.tick * 2 - 1;
+				szLineLong += (size_t)note.tick * 2 - 1;
 #endif
 			}
 		}
@@ -175,7 +175,7 @@ int main(int argc, char *argv[]) try
 #ifndef MATRIX_GEN
 				x += note.tick;
 #else
-				x += note.tick * 2 - 1;
+				x += (size_t)note.tick * 2 - 1;
 #endif
 #endif
 				continue;
