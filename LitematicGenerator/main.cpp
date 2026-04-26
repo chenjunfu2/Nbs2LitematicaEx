@@ -8,9 +8,9 @@ int main(void)
 
 	NBT_Print{}("AirBlock:\n");
 	NBT_Helper::Print(ab);
-	NBT_Print{}("\nNoteBlock:\n");
+	NBT_Print{}("\n\nNoteBlock:\n");
 	NBT_Helper::Print(nb);
-	NBT_Print{}("\nRepeaterBlock:\n");
+	NBT_Print{}("\n\nRepeaterBlock:\n");
 	NBT_Helper::Print(rb);
 	NBT_Print{}("\n");
 
