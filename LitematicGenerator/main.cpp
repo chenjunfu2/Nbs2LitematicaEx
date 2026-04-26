@@ -141,11 +141,21 @@ int main(int argc, char *argv[]) try
 			else if (note.enType == MyNote2::Type::Note)//当前是音符（空白不被索引），查找索引，然后生成
 			{
 				//获取离散化映射索引
-				auto itFind = nv.mapNote2Index.find(note);
-				MyAssert(itFind != nv.mapNote2Index.end(), "WTF?");
-				size_t szNoteMapIndex = itFind->second;
+				size_t szNoteMapIndex;
+				{
+					auto itFind = nv.mapNote2Index.find(note);
+					MyAssert(itFind != nv.mapNote2Index.end(), "WTF?");
+					szNoteMapIndex = itFind->second;
+				}
 
-				reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,1,0 }), szInstrumentPaletteStartIndex + note.instrument);//2层，生成音符盒垫底方块
+				size_t szNoteInstrumentMapIndex;
+				{
+					auto itFind = nv.mapInstrumentIndex.find(note.instrument);
+					MyAssert(itFind != nv.mapInstrumentIndex.end(), "WTF?");
+					szNoteInstrumentMapIndex = itFind->second;
+				}
+
+				reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,1,0 }), szInstrumentPaletteStartIndex + szNoteInstrumentMapIndex);//2层，生成音符盒垫底方块
 				reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,2,0 }), szNoteBlockPaletteStartIndex + szNoteMapIndex);//3层，生成音符盒方块
 				++x;
 			}
