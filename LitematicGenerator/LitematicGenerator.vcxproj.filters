@@ -23,6 +23,9 @@
     <ClInclude Include="LitematicGenerator.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="BlockState.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt">
