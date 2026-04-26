@@ -6,6 +6,8 @@
 #include <util/MyAssert.hpp>
 #include <format>
 
+#define NO_REPEATER
+
 //int main(void)
 //{
 //	auto ab = AirBlock{}.ToCompound();
@@ -124,15 +126,16 @@ int main(int argc, char *argv[]) try
 			//如果当前是空白，那么生成等量的方块与中继器（第2~3层）
 			if (note.enType == MyNote2::Type::Blank)
 			{
-				//for (size_t i = 0; i < note.tick; ++i)
-				//{
-				//	reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,1,0 }), 1);//2层 -> 平滑石
-				//	reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,2,0 }), 2);//3层 -> 中继器
-				//	++x;
-				//}
-
+#ifndef NO_REPEATER
+				for (size_t i = 0; i < note.tick; ++i)
+				{
+					reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,1,0 }), 1);//2层 -> 平滑石
+					reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,2,0 }), 2);//3层 -> 中继器
+					++x;
+				}
+#else
 				x += note.tick;
-
+#endif
 				continue;
 			}
 			else if (note.enType == MyNote2::Type::Note)//当前是音符（空白不被索引），查找索引，然后生成
