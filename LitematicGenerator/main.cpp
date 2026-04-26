@@ -6,10 +6,11 @@ int main(void)
 	auto nb = NoteBlock{}.ToCompound();
 	auto rb = RepeaterBlock{}.ToCompound();
 
+	NBT_Print{}("AirBlock:\n");
 	NBT_Helper::Print(ab);
-	NBT_Print{}("\n");
+	NBT_Print{}("\nNoteBlock:\n");
 	NBT_Helper::Print(nb);
-	NBT_Print{}("\n");
+	NBT_Print{}("\nRepeaterBlock:\n");
 	NBT_Helper::Print(rb);
 	NBT_Print{}("\n");
 
