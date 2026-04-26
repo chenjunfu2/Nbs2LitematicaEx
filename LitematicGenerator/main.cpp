@@ -114,11 +114,6 @@ int main(int argc, char *argv[]) try
 		MyAssert(reg.stBlocks.listBlockStatePalette.Size() == szBlockStatePaletteSize, "WTF?");
 
 		//到此已完成调色板准备
-		//设置区域最底为固定方块
-		//for (size_t x = 0; x < szLineLong; ++x)
-		//{
-		//	reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,0,0 }), 1);//1->stSmoothStoneBlock
-		//}
 
 		//设置第二层与第三层（同时）
 		size_t x = 0;
@@ -129,17 +124,17 @@ int main(int argc, char *argv[]) try
 			//如果当前是空白，那么生成等量的方块与中继器（第2~3层）
 			if (note.enType == MyNote2::Type::Blank)
 			{
-				for (size_t i = 0; i < note.tick; ++i)
-				{
-					reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,1,0 }), 1);//2层 -> 平滑石
-					reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,2,0 }), 2);//3层 -> 中继器
-					++x;
-				}
+				//for (size_t i = 0; i < note.tick; ++i)
+				//{
+				//	reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,1,0 }), 1);//2层 -> 平滑石
+				//	reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,2,0 }), 2);//3层 -> 中继器
+				//	++x;
+				//}
 
 				continue;
 			}
 			else if (note.enType == MyNote2::Type::Note)//当前是音符（空白不被索引），查找索引，然后生成
-			{
+			{//设置第1~3层
 				//获取离散化映射索引
 				size_t szNoteMapIndex;
 				{
