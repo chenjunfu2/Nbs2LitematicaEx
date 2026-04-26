@@ -489,6 +489,6 @@ int main(int argc, char *argv[]) try
 }
 catch (const std::exception &e)
 {
-	printerr("catch std::exception: [{}]", e.what());
+	printerr("ERROR!\bcatch std::exception: [{}]\n", e.what());
 	throw e;
 }

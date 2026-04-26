@@ -50,6 +50,22 @@ public:
 
 };
 
+struct SmoothStoneBlock
+{
+public:
+	static inline const NBT_Type::String strBlockName = MU8STR("minecraft:smooth_stone");
+
+public:
+	NBT_Type::Compound ToCompound(void)
+	{
+		return NBT_Type::Compound
+		{
+			{MU8STR("Name"), strBlockName},
+		};
+	}
+
+};
+
 struct NoteBlock
 {
 public:
