@@ -2,10 +2,6 @@ name: C/C++ CI
 
 on:
   workflow_dispatch:
-  #push:
-  #  branches: [ "master" ]
-  #pull_request:
-  #  branches: [ "master" ]
 
 jobs:
   build:
@@ -30,26 +26,28 @@ jobs:
       with:
         version: latest
 
-    - name: List Dir (before build)
-      run: find . -type f | sort
-
     - name: Configure with CMake
       run: cmake -B build -S .
 
     - name: Build
       run: cmake --build build
 
-    - name: List Dir (after build)
-      run: find . -type f | sort
+    - name: List build directory
+      run: find build -type f | sort
 
-    - name: Install
-      run: cmake --install build --prefix install
-
-    - name: List install dir
-      run: find install -type f | sort
+    - name: Collect artifacts
+      run: |
+        mkdir -p artifacts
+        if [ -f "build/LitematicGenerator/LitematicGenerator" ]; then
+          cp build/LitematicGenerator/LitematicGenerator artifacts/
+        else
+          find build -type f -executable -exec file {} \; | grep ELF | cut -d: -f1 | xargs -I {} cp {} artifacts/
+        fi
+        echo "Collected artifacts:"
+        ls -la artifacts/
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
         name: myprogram-${{ matrix.compiler }}
-        path: install/
+        path: artifacts/
