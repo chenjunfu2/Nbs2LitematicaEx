@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) try
 			.stEnclosingSize{},//偷懒不写
 			.strAuthor{MU8STR("AutoGen")},
 			.strDescription{},
-			.strName{MU8STR("NBS Music")},
+			.strName{sInputFilePath},
 			.iRegionCount = 0,//生成完成后再修改
 			.lTimeCreated = (NBT_Type::Long)CodeTimer::GetSystemTime(),
 			.lTimeModified = (NBT_Type::Long)CodeTimer::GetSystemTime(),
@@ -111,7 +111,11 @@ int main(int argc, char *argv[]) try
 			}
 			else if (note.enType == MyNote2::Type::Blank)
 			{
+#ifndef MATRIX_GEN
 				szLineLong += note.tick;//nbs中的tick是redstone tick
+#else
+				szLineLong += note.tick * 2;
+#endif
 			}
 		}
 
@@ -165,7 +169,11 @@ int main(int argc, char *argv[]) try
 				{
 					reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,1,0 }), 1);//2层 -> 平滑石
 					reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,2,0 }), 2);//3层 -> 中继器
+#ifndef MATRIX_GEN
 					++x;
+#else
+					x += 2;
+#endif
 				}
 #else
 #ifndef MATRIX_GEN
