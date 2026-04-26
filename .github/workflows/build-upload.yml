@@ -1,0 +1,48 @@
+name: C/C++ CI
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [gcc, clang]
+      fail-fast: false
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Setup GCC
+      if: matrix.compiler == 'gcc'
+      uses: egor-tensin/setup-gcc@v1
+      with:
+        version: latest
+
+    - name: Setup Clang
+      if: matrix.compiler == 'clang'
+      uses: egor-tensin/setup-clang@v1
+      with:
+        version: latest
+
+    - name: Configure with CMake
+      run: cmake -B build -S .
+
+    - name: Build
+      run: cmake --build build
+
+    - name: List build directory
+      run: find build -type f | sort
+
+    - name: Collect artifacts
+      run: |
+        mkdir -p artifacts
+        cp build/LitematicGenerator/LitematicGenerator artifacts/
+        ls -la artifacts/
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: Nbs2LitematicaEx-LitematicGenerator-${{ matrix.compiler }}
+        path: artifacts/
