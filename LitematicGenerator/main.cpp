@@ -160,7 +160,7 @@ int main(int argc, char *argv[]) try
 
 	//准备NBT生成
 	std::vector<uint8_t> vStream, vStreamComp;
-	MyAssert(NBT_Writer::WriteNBT(vStream, 0, std::move(fLitematic).ToCompound()));
+	MyAssert(NBT_Writer::WriteNBT(vStream, 0, NBT_Type::Compound{ {MU8STR(""), std::move(fLitematic).ToCompound() } }));
 	MyAssert(NBT_IO::CompressDataNoThrow(vStreamComp, vStream));
 	vStream.clear();
 	vStream.shrink_to_fit();
