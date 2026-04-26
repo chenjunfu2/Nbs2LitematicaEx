@@ -1,4 +1,6 @@
 ﻿#include "LitematicFile.hpp"
+
+#define NO_EXCLUDE_SPACE
 #include "MyNote.hpp"
 
 #include <nbs_cpp/NBS_All.hpp>
@@ -67,6 +69,15 @@ int main(int argc, char *argv[]) try
 	size_t szLayerIndex = 0;
 	for (const auto &noteLayer : nbsNoteLayerList)//处理每一层
 	{
+#ifdef NO_EXCLUDE_SPACE
+		if (noteLayer.empty())//移动
+		{
+			++szLayerIndex;
+			continue;
+		}
+#endif
+
+
 		//遍历当前层，计算最终长度
 		size_t szLineLong = 0;
 		for (const auto &note : noteLayer)

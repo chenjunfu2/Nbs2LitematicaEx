@@ -159,6 +159,7 @@ NoteLayerList ToMyNoteList(const NBS_File &fNBS)
 		listNoteLayer[it.layer].emplace_back(it.tick, it.instrument, it.key);
 	}
 
+#ifndef NO_EXCLUDE_SPACE
 	//裁剪静音的层
 	size_t last = 0;
 	for (size_t i = 0; i < szLayerSize; ++i)
@@ -188,6 +189,8 @@ NoteLayerList ToMyNoteList(const NBS_File &fNBS)
 	}
 
 	listNoteLayer.resize(last);
+#endif
+
 	return listNoteLayer;
 }
 
