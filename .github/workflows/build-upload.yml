@@ -38,12 +38,7 @@ jobs:
     - name: Collect artifacts
       run: |
         mkdir -p artifacts
-        if [ -f "build/LitematicGenerator/LitematicGenerator" ]; then
-          cp build/LitematicGenerator/LitematicGenerator artifacts/
-        else
-          find build -type f -executable -exec file {} \; | grep ELF | cut -d: -f1 | xargs -I {} cp {} artifacts/
-        fi
-        echo "Collected artifacts:"
+        cp build/LitematicGenerator/LitematicGenerator artifacts/
         ls -la artifacts/
 
     - name: Upload artifacts
