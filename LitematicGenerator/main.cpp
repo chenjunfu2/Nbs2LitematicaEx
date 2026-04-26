@@ -152,7 +152,7 @@ int main(int argc, char *argv[]) try
 		}
 
 		//完成，插入区域中
-		fLitematic.stRegions.mapRegion.emplace(std::format("layer[{}]", szLayerIndex), std::move(reg));
+		fLitematic.stRegions.mapRegion.emplace(std::format("layer-{}", szLayerIndex), std::move(reg));
 	}
 
 	//填入元信息
