@@ -131,6 +131,8 @@ int main(int argc, char *argv[]) try
 				//	++x;
 				//}
 
+				x += note.tick;
+
 				continue;
 			}
 			else if (note.enType == MyNote2::Type::Note)//当前是音符（空白不被索引），查找索引，然后生成
