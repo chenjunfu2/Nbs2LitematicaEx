@@ -34,10 +34,10 @@ namespace BlockStateUtil
 }
 
 
-struct AirBlock
+struct NormalBlock
 {
 public:
-	static inline const NBT_Type::String strBlockName = MU8STR("minecraft:air");
+	NBT_Type::String strBlockName;
 
 public:
 	NBT_Type::Compound ToCompound(void)
@@ -50,10 +50,40 @@ public:
 
 };
 
-struct SmoothStoneBlock
+const NormalBlock AirBlock = NormalBlock{ MU8STR("minecraft:air")};
+const NormalBlock SmoothStoneBlock = NormalBlock{ MU8STR("minecraft:smooth_stone")};
+
+
+struct DirectionBlock
 {
 public:
-	static inline const NBT_Type::String strBlockName = MU8STR("minecraft:smooth_stone");
+	enum class Direction : uint8_t
+	{
+		x,//default
+		y,
+		z,
+
+		ENUM_END,//end flag
+	};
+
+	static inline const NBT_Type::String DirectionStr[] =
+	{
+		MU8STR("x"),
+		MU8STR("y"),
+		MU8STR("z"),
+	};
+
+public:
+	static NBT_Type::String GetDirectionStr(Direction enDirection) noexcept
+	{
+		return (uint8_t)enDirection < (uint8_t)Direction::ENUM_END
+			? DirectionStr[(uint8_t)enDirection]
+			: DirectionStr[(uint8_t)Direction::x];
+	}
+
+public:
+	NBT_Type::String strBlockName;
+	Direction enDirection = Direction::x;
 
 public:
 	NBT_Type::Compound ToCompound(void)
@@ -61,6 +91,7 @@ public:
 		return NBT_Type::Compound
 		{
 			{MU8STR("Name"), strBlockName},
+			{MU8STR("axis"), GetDirectionStr(enDirection)},
 		};
 	}
 
@@ -93,7 +124,7 @@ public:
 		ENUM_END,//end flag
 	};
 
-	static inline const NBT_Type::String InstrumentName[] =
+	static inline const NBT_Type::String InstrumentStr[] =
 	{
 		MU8STR("harp"),
 		MU8STR("bass"),
@@ -113,12 +144,39 @@ public:
 		MU8STR("pling"),
 	};
 
+	static inline const NBT_Type::Compound InstrumentBlock[] =
+	{
+		NormalBlock{MU8STR("minecraft:dirt")}.ToCompound(),
+		NormalBlock{MU8STR("minecraft:oak_planks")}.ToCompound(),
+		NormalBlock{MU8STR("minecraft:cobblestone")}.ToCompound(),
+		NormalBlock{MU8STR("minecraft:sand")}.ToCompound(),
+		NormalBlock{MU8STR("minecraft:glass")}.ToCompound(),
+		NormalBlock{MU8STR("minecraft:white_wool")}.ToCompound(),
+		NormalBlock{MU8STR("minecraft:clay")}.ToCompound(),
+		NormalBlock{MU8STR("minecraft:gold_block")}.ToCompound(),
+		NormalBlock{MU8STR("minecraft:packed_ice")}.ToCompound(),
+		DirectionBlock{MU8STR("minecraft:bone_block"),DirectionBlock::Direction::y }.ToCompound(),
+		NormalBlock{MU8STR("minecraft:iron_block")}.ToCompound(),
+		NormalBlock{MU8STR("minecraft:soul_sand")}.ToCompound(),
+		NormalBlock{MU8STR("minecraft:pumpkin")}.ToCompound(),
+		NormalBlock{MU8STR("minecraft:emerald_block")}.ToCompound(),
+		DirectionBlock{MU8STR("minecraft:hay_block"), DirectionBlock::Direction::y}.ToCompound(),
+		NormalBlock{MU8STR("minecraft:glowstone")}.ToCompound(),
+	};
+
 public:
-	static NBT_Type::String GetInstrumentName(Instrument enInstrument) noexcept
+	static NBT_Type::Compound GetInstrumentBlock(Instrument enInstrument) noexcept
 	{
 		return (uint8_t)enInstrument < (uint8_t)Instrument::ENUM_END
-			? InstrumentName[(uint8_t)enInstrument]
-			: InstrumentName[(uint8_t)Instrument::harp];
+			? InstrumentBlock[(uint8_t)enInstrument]
+			: InstrumentBlock[(uint8_t)Instrument::harp];
+	}
+
+	static NBT_Type::String GetInstrumentStr(Instrument enInstrument) noexcept
+	{
+		return (uint8_t)enInstrument < (uint8_t)Instrument::ENUM_END
+			? InstrumentStr[(uint8_t)enInstrument]
+			: InstrumentStr[(uint8_t)Instrument::harp];
 	}
 
 	static NBT_Type::String GetNoteStr(uint8_t u8Note) noexcept
@@ -149,7 +207,7 @@ public:
 			{MU8STR("Name"), strBlockName},
 			{MU8STR("Properties"), NBT_Type::Compound
 				{
-					{MU8STR("instrument"),GetInstrumentName(enInstrument)},
+					{MU8STR("instrument"),GetInstrumentStr(enInstrument)},
 					{MU8STR("note"), GetNoteStr(u8Note)},
 					{MU8STR("powered"),GetPoweredStr(bPowered)},
 				},
@@ -175,7 +233,7 @@ public:
 		ENUM_END,//end flag
 	};
 
-	static inline const NBT_Type::String FacingName[] =
+	static inline const NBT_Type::String FacingStr[] =
 	{
 		MU8STR("north"),
 		MU8STR("east"),
@@ -200,11 +258,11 @@ public:
 		return BlockStateUtil::Uint8ToNbtString(u8Delay);
 	}
 
-	static NBT_Type::String GetFacingName(Facing enFacing) noexcept
+	static NBT_Type::String GetFacingStr(Facing enFacing) noexcept
 	{
 		return (uint8_t)enFacing < (uint8_t)Facing::ENUM_END
-			? FacingName[(uint8_t)enFacing]
-			: FacingName[(uint8_t)Facing::north];
+			? FacingStr[(uint8_t)enFacing]
+			: FacingStr[(uint8_t)Facing::north];
 	}
 
 	static NBT_Type::String GetLockedStr(bool bLocked) noexcept
@@ -226,7 +284,7 @@ public:
 			{MU8STR("Properties"), NBT_Type::Compound
 				{
 					{MU8STR("delay"), GetDelayStr(u8Delay)},
-					{MU8STR("facing"), GetFacingName(enFacing)},
+					{MU8STR("facing"), GetFacingStr(enFacing)},
 					{MU8STR("locked"), GetLockedStr(bLocked)},
 					{MU8STR("powered"), GetPoweredStr(bPowered)},
 				},
