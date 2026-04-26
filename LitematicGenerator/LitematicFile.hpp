@@ -31,6 +31,7 @@ struct LitematicaBlocks
 public:
 	size_t szLayerSize;//一层方块数 = x*z
 	size_t szTotalSize;//总方块数 = x*y*z
+	size_t szXSize;//x大小
 
 	size_t szBitsPerEntry;//调色板索引占用的位数
 	size_t szEntryCount;//总调色板索引个数
@@ -82,10 +83,12 @@ public:
 	}
 
 public:
-	LitematicaBlocks(size_t szPaletteSize, Vec3I v3iRegionSize)//初始化后，调色板需自行赋值
+	//初始化后，调色板需自行赋值
+	void Init(size_t szPaletteSize, Vec3I v3iRegionSize)
 	{
 		szLayerSize = (size_t)v3iRegionSize.x * (size_t)v3iRegionSize.z;
 		szTotalSize = szLayerSize * (size_t)v3iRegionSize.y;
+		szXSize = v3iRegionSize.x;
 
 		//调色板大小-1后，用32-二进制最高位的前导0位数，得出调色板内的方块数量至少需要多少bit才能存储，这一步是为了获取位索引最大大小，max为了确保至少为2bit
 		szBitsPerEntry = std::max((uint32_t)2, (uint32_t)32 - NumberOfLeadingZeros(szPaletteSize - 1));
@@ -96,27 +99,32 @@ public:
 		larrBlockStates.resize(RoundUpToPowerOfTwo(szEntryCount * szBitsPerEntry, 64) / 64, 0);
 	}
 
-	void setAt(size_t index, size_t value)
+	size_t GetSpatialIndex(Vec3I v3iCoord)
 	{
-		size_t szStartOffset = index * szBitsPerEntry;
+		return (v3iCoord.y * szLayerSize) + v3iCoord.z * szXSize + v3iCoord.x;
+	}
+
+	void SetBlock(size_t szSpatialIndex, size_t szBlockPaletteIndex)
+	{
+		size_t szStartOffset = szSpatialIndex * szBitsPerEntry;
 		size_t szStartArrIndex = szStartOffset / 64;
-		size_t szEndArrIndex = (((index + 1) * szBitsPerEntry - 1) >> 6);
+		size_t szEndArrIndex = (((szSpatialIndex + 1) * szBitsPerEntry - 1) >> 6);
 		size_t szStartBitOffset = szStartOffset % 64;
-		larrBlockStates[szStartArrIndex] = larrBlockStates[szStartArrIndex] & ~(szMaxEntryValue << szStartBitOffset) | (value & szMaxEntryValue) << szStartBitOffset;
+		larrBlockStates[szStartArrIndex] = larrBlockStates[szStartArrIndex] & ~(szMaxEntryValue << szStartBitOffset) | (szBlockPaletteIndex & szMaxEntryValue) << szStartBitOffset;
 
 		if (szStartArrIndex != szEndArrIndex)
 		{
 			size_t szEndOffset = 64 - szStartBitOffset;
 			size_t szClearLowBitsOffset = szBitsPerEntry - szEndOffset;
-			larrBlockStates[szEndArrIndex] = larrBlockStates[szEndArrIndex] >> szClearLowBitsOffset << szClearLowBitsOffset | (value & szMaxEntryValue) >> szEndOffset;
+			larrBlockStates[szEndArrIndex] = larrBlockStates[szEndArrIndex] >> szClearLowBitsOffset << szClearLowBitsOffset | (szBlockPaletteIndex & szMaxEntryValue) >> szEndOffset;
 		}
 	}
 
-	size_t getAt(size_t index)
+	size_t GetBlock(size_t szSpatialIndex)
 	{
-		size_t szStartOffset = index * szBitsPerEntry;
+		size_t szStartOffset = szSpatialIndex * szBitsPerEntry;
 		size_t szStartArrIndex = szStartOffset / 64;
-		size_t szEndArrIndex = (((index + 1L) * szBitsPerEntry - 1L) >> 6);
+		size_t szEndArrIndex = (((szSpatialIndex + 1L) * szBitsPerEntry - 1L) >> 6);
 		size_t szStartBitOffset = szStartOffset % 64;
 
 		if (szStartArrIndex == szEndArrIndex)
