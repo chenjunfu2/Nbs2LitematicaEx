@@ -216,7 +216,7 @@ int main(int argc, char *argv[]) try
 		size_t szPos = sInputFilePath.find_last_of('.');
 
 		//'.'前面的部分，不包含'.'
-		std::string sNewFileName = sInputFilePath.substr(0, szPos).append("_Convert");
+		std::string sNewFileName = sInputFilePath.substr(0, szPos).append("_");
 		//'.'后面的部分，包含'.'
 		std::string sNewFileExten = sInputFilePath.substr(szPos);
 
