@@ -103,6 +103,10 @@ int main(int argc, char *argv[]) try
 
 		//遍历当前层，计算最终长度
 		size_t szLineLong = 0;
+#if defined(NO_REPEATER) && defined(MATRIX_GEN)
+		bool bFirstBlank = noteLayer.front().enType == MyNote2::Type::Blank;
+		szLineLong += (size_t)bFirstBlank;
+#endif
 		for (const auto &note : noteLayer)
 		{
 			if (note.enType == MyNote2::Type::Note)
@@ -157,6 +161,9 @@ int main(int argc, char *argv[]) try
 
 		//设置第二层与第三层（同时）
 		size_t x = 0;
+#if defined(NO_REPEATER) && defined(MATRIX_GEN)
+		x += (size_t)bFirstBlank;
+#endif
 		for (const auto &note : noteLayer)
 		{
 			//根据乐谱信息设置
