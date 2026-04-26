@@ -218,7 +218,7 @@ int main(int argc, char *argv[]) try
 		//'.'前面的部分，不包含'.'
 		std::string sNewFileName = sInputFilePath.substr(0, szPos).append("_");
 		//'.'后面的部分，包含'.'
-		std::string sNewFileExten = sInputFilePath.substr(szPos);
+		std::string sNewFileExten = ".litematic";
 
 		//唯一文件名
 		sFilePath = GenerateUniqueFilename(sNewFileName, sNewFileExten);
