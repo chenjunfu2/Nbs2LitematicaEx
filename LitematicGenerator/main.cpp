@@ -115,10 +115,10 @@ int main(int argc, char *argv[]) try
 
 		//到此已完成调色板准备
 		//设置区域最底为固定方块
-		for (size_t x = 0; x < szLineLong; ++x)
-		{
-			reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,0,0 }), 1);//1->stSmoothStoneBlock
-		}
+		//for (size_t x = 0; x < szLineLong; ++x)
+		//{
+		//	reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,0,0 }), 1);//1->stSmoothStoneBlock
+		//}
 
 		//设置第二层与第三层（同时）
 		size_t x = 0;
@@ -155,6 +155,7 @@ int main(int argc, char *argv[]) try
 					szNoteInstrumentMapIndex = itFind->second;
 				}
 
+				reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,0,0 }), 1);//1层音色方块垫底->stSmoothStoneBlock
 				reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,1,0 }), szInstrumentPaletteStartIndex + szNoteInstrumentMapIndex);//2层，生成音符盒垫底方块
 				reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,2,0 }), szNoteBlockPaletteStartIndex + szNoteMapIndex);//3层，生成音符盒方块
 				++x;
