@@ -42,7 +42,23 @@ int main(int argc, char *argv[]) try
 	//获取每一层音符数，按照出现顺序生成音符盒调色板，中继器固定1挡位
 	//在最底层生成普通方块垫底，第二层生成音符盒音色方块和普通方块，第三层生成音符盒与中继器
 
-	LitematicFile fLitematic;
+	LitematicFile fLitematic
+	{
+		.stMetaData
+		{
+			.stEnclosingSize{},//偷懒不写
+			.strAuthor{MU8STR("AutoGen")},
+			.strDescription{},
+			.strName{MU8STR("NBS Music")},
+			.iRegionCount = 0,//生成完成后再修改
+			.lTimeCreated = CodeTimer::GetSystemTime(),
+			.lTimeModified = CodeTimer::GetSystemTime(),
+			.iTotalBlocks = 0,//偷懒不写
+			.iTotalVolume = 0,//偷懒不写
+		}
+	};
+
+	//可复用方块
 	RepeaterBlock stRepeaterBlock{};
 
 	auto nbsNoteLayerList = ToMyNoteList2(ToMyNoteList(fNbs));
@@ -139,7 +155,16 @@ int main(int argc, char *argv[]) try
 		fLitematic.stRegions.mapRegion.emplace(std::format("layer[{}]", szLayerIndex), std::move(reg));
 	}
 
+	//填入元信息
+	fLitematic.stMetaData.iRegionCount = fLitematic.stRegions.mapRegion.size();
 
+	//准备NBT生成
+	std::vector<uint8_t> vStream, vStreamComp;
+	MyAssert(NBT_Writer::WriteNBT(vStream, 0, std::move(fLitematic).ToCompound()));
+	MyAssert(NBT_IO::CompressDataNoThrow(vStreamComp, vStream));
+	vStream.clear();
+	vStream.shrink_to_fit();
+	MyAssert(NBT_IO::WriteFile("test.litematic", vStreamComp));
 
 	return 0;
 }

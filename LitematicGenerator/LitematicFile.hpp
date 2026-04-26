@@ -10,9 +10,9 @@
 struct Vec3I
 {
 public:
-	NBT_Type::Int x;
-	NBT_Type::Int y;
-	NBT_Type::Int z;
+	NBT_Type::Int x{};
+	NBT_Type::Int y{};
+	NBT_Type::Int z{};
 
 public:
 	NBT_Type::Compound ToCompound(void) const//builtin无需move特化
@@ -146,7 +146,7 @@ public:
 	struct MetaData
 	{
 	public:
-		Vec3I stEnclosingSize;//Compound
+		Vec3I stEnclosingSize;
 		NBT_Type::String strAuthor;
 		NBT_Type::String strDescription;
 		NBT_Type::String strName;
