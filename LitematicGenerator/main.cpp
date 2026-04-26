@@ -9,6 +9,7 @@
 #include <format>
 
 #define NO_REPEATER
+#define MATRIX_GEN
 
 //int main(void)
 //{
@@ -167,7 +168,11 @@ int main(int argc, char *argv[]) try
 					++x;
 				}
 #else
+#ifndef MATRIX_GEN
 				x += note.tick;
+#else
+				x += note.tick * 2;
+#endif
 #endif
 				continue;
 			}
