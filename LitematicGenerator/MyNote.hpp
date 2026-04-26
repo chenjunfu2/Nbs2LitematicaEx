@@ -124,6 +124,19 @@ public:
 	}
 };
 
+
+namespace std
+{
+	template <>// 特化 hash
+	struct hash<MyNote2>
+	{
+		size_t operator()(const MyNote2 &_Hash) const noexcept
+		{
+			return _Hash.Hash();
+		}
+	};
+}
+
 //--------------------------------------------------------------------------------//
 
 using MyNoteList = std::vector<MyNote>;

@@ -91,9 +91,9 @@ int main(int argc, char *argv[]) try
 
 		size_t szBasePaletteStartIndex = reg.stBlocks.listBlockStatePalette.Size();//0
 
-		reg.stBlocks.listBlockStatePalette.AddBack(stAirBlock);//0
-		reg.stBlocks.listBlockStatePalette.AddBack(stSmoothStoneBlock);//1
-		reg.stBlocks.listBlockStatePalette.AddBack(stRepeaterBlock);//2
+		reg.stBlocks.listBlockStatePalette.AddBack(stAirBlock.ToCompound());//0
+		reg.stBlocks.listBlockStatePalette.AddBack(stSmoothStoneBlock.ToCompound());//1
+		reg.stBlocks.listBlockStatePalette.AddBack(stRepeaterBlock.ToCompound());//2
 
 		size_t szInstrumentPaletteStartIndex = reg.stBlocks.listBlockStatePalette.Size();//3
 
