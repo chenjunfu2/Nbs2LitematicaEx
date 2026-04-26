@@ -34,7 +34,6 @@ public:
 	size_t szXSize;//x大小
 
 	size_t szBitsPerEntry;//调色板索引占用的位数
-	size_t szEntryCount;//总调色板索引个数
 	size_t szMaxEntryValue;//当前占用的位数可存储的最大值（用于位掩码）
 
 	NBT_Type::List listBlockStatePalette;//方块调色板
@@ -92,11 +91,10 @@ public:
 
 		//调色板大小-1后，用32-二进制最高位的前导0位数，得出调色板内的方块数量至少需要多少bit才能存储，这一步是为了获取位索引最大大小，max为了确保至少为2bit
 		szBitsPerEntry = std::max((uint32_t)2, (uint32_t)32 - NumberOfLeadingZeros(szPaletteSize - 1));
-		szEntryCount = szPaletteSize;
 		szMaxEntryValue = ((size_t)1 << szBitsPerEntry) - 1;
 		//计算两个数组大小
 		listBlockStatePalette.Reserve(szPaletteSize);
-		larrBlockStates.resize(RoundUpToPowerOfTwo(szEntryCount * szBitsPerEntry, 64) / 64, 0);
+		larrBlockStates.resize(RoundUpToPowerOfTwo(szTotalSize * szBitsPerEntry, 64) / 64, 0);
 	}
 
 	size_t GetSpatialIndex(Vec3I v3iCoord)

@@ -52,6 +52,20 @@ public:
 
 const NormalBlock stAirBlock = NormalBlock{ MU8STR("minecraft:air")};
 const NormalBlock stSmoothStoneBlock = NormalBlock{ MU8STR("minecraft:smooth_stone")};
+const NormalBlock stDirtBlock = NormalBlock{ MU8STR("minecraft:dirt") };
+const NormalBlock stOakPlanksBlock = NormalBlock{ MU8STR("minecraft:oak_planks") };
+const NormalBlock stCobblestoneBlock = NormalBlock{ MU8STR("minecraft:cobblestone") };
+const NormalBlock stSandBlock = NormalBlock{ MU8STR("minecraft:sand") };
+const NormalBlock stGlassBlock = NormalBlock{ MU8STR("minecraft:glass") };
+const NormalBlock stWhiteWoolBlock = NormalBlock{ MU8STR("minecraft:white_wool") };
+const NormalBlock stClayBlock = NormalBlock{ MU8STR("minecraft:clay") };
+const NormalBlock stGoldBlock = NormalBlock{ MU8STR("minecraft:gold_block") };
+const NormalBlock stPackedIceBlock = NormalBlock{ MU8STR("minecraft:packed_ice") };
+const NormalBlock stIronBlock = NormalBlock{ MU8STR("minecraft:iron_block") };
+const NormalBlock stSoulSandBlock = NormalBlock{ MU8STR("minecraft:soul_sand") };
+const NormalBlock stPumpkinBlock = NormalBlock{ MU8STR("minecraft:pumpkin") };
+const NormalBlock stEmeraldBlock = NormalBlock{ MU8STR("minecraft:emerald_block") };
+const NormalBlock stGlowstoneBlock = NormalBlock{ MU8STR("minecraft:glowstone") };
 
 
 struct DirectionBlock
@@ -96,6 +110,10 @@ public:
 	}
 
 };
+
+const DirectionBlock stBoneBlock_Y = DirectionBlock{ MU8STR("minecraft:bone_block"), DirectionBlock::Direction::y };
+const DirectionBlock stHayBlock_Y = DirectionBlock{ MU8STR("minecraft:hay_block"),  DirectionBlock::Direction::y };
+
 
 struct NoteBlock
 {
@@ -146,22 +164,22 @@ public:
 
 	static inline const NBT_Type::Compound InstrumentBlock[] =
 	{
-		NormalBlock{MU8STR("minecraft:dirt")}.ToCompound(),
-		NormalBlock{MU8STR("minecraft:oak_planks")}.ToCompound(),
-		NormalBlock{MU8STR("minecraft:cobblestone")}.ToCompound(),
-		NormalBlock{MU8STR("minecraft:sand")}.ToCompound(),
-		NormalBlock{MU8STR("minecraft:glass")}.ToCompound(),
-		NormalBlock{MU8STR("minecraft:white_wool")}.ToCompound(),
-		NormalBlock{MU8STR("minecraft:clay")}.ToCompound(),
-		NormalBlock{MU8STR("minecraft:gold_block")}.ToCompound(),
-		NormalBlock{MU8STR("minecraft:packed_ice")}.ToCompound(),
-		DirectionBlock{MU8STR("minecraft:bone_block"),DirectionBlock::Direction::y }.ToCompound(),
-		NormalBlock{MU8STR("minecraft:iron_block")}.ToCompound(),
-		NormalBlock{MU8STR("minecraft:soul_sand")}.ToCompound(),
-		NormalBlock{MU8STR("minecraft:pumpkin")}.ToCompound(),
-		NormalBlock{MU8STR("minecraft:emerald_block")}.ToCompound(),
-		DirectionBlock{MU8STR("minecraft:hay_block"), DirectionBlock::Direction::y}.ToCompound(),
-		NormalBlock{MU8STR("minecraft:glowstone")}.ToCompound(),
+		stDirtBlock.ToCompound(),
+		stOakPlanksBlock.ToCompound(),
+		stCobblestoneBlock.ToCompound(),
+		stSandBlock.ToCompound(),
+		stGlassBlock.ToCompound(),
+		stWhiteWoolBlock.ToCompound(),
+		stClayBlock.ToCompound(),
+		stGoldBlock.ToCompound(),
+		stPackedIceBlock.ToCompound(),
+		stBoneBlock_Y.ToCompound(),
+		stIronBlock.ToCompound(),
+		stSoulSandBlock.ToCompound(),
+		stPumpkinBlock.ToCompound(),
+		stEmeraldBlock.ToCompound(),
+		stHayBlock_Y.ToCompound(),
+		stGlowstoneBlock.ToCompound(),
 	};
 
 public:
