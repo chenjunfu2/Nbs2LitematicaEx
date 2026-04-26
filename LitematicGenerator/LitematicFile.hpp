@@ -95,7 +95,7 @@ public:
 		szEntryCount = szPaletteSize;
 		szMaxEntryValue = ((size_t)1 << szBitsPerEntry) - 1;
 		//计算两个数组大小
-		listBlockStatePalette.Resize(szPaletteSize, {});
+		listBlockStatePalette.Reserve(szPaletteSize);
 		larrBlockStates.resize(RoundUpToPowerOfTwo(szEntryCount * szBitsPerEntry, 64) / 64, 0);
 	}
 

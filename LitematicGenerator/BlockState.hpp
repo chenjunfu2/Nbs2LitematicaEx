@@ -215,11 +215,6 @@ public:
 		};
 	}
 
-	NBT_Type::Compound GetCurrentInstrumentBlock(void) const
-	{
-		return GetInstrumentBlock(enInstrument);
-	}
-
 };
 
 

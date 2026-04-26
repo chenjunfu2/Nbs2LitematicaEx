@@ -46,19 +46,97 @@ int main(int argc, char *argv[]) try
 	RepeaterBlock stRepeaterBlock{};
 
 	auto nbsNoteLayerList = ToMyNoteList2(ToMyNoteList(fNbs));
+	size_t szLayerIndex = 0;
 	for (const auto &noteLayer : nbsNoteLayerList)//处理每一层
 	{
+		//遍历当前层，计算最终长度
+		size_t szLineLong = 0;
+		for (const auto &note : noteLayer)
+		{
+			if (note.enType == MyNote2::Type::Note)
+			{
+				szLineLong += 1;
+			}
+			else if (note.enType == MyNote2::Type::Blank)
+			{
+				szLineLong += note.tick / 2;//1个1档中继器为1个长度，tick是2的倍数，除以二得到中继器数量
+			}
+		}
+
 		//首先进行离散化，对每个非空白note分配一个值
 		auto nv = ToNoteVal(noteLayer);
 		//计算投影选区调色板（大小为不同的音符数加音色种类加3（3的组成有空气方块、实体方块、1挡中继器方块））
 		LitematicFile::Region reg;
-		size_t szBlockStatePaletteSize = nv.szInstrumentCount + nv.mapNoteSubIndex.size() + 3;
+		size_t szBlockStatePaletteSize = nv.mapInstrumentIndex.size() + nv.mapNote2Index.size() + 3;
 
+		reg.stSize = { (NBT_Type::Int)szLineLong,3,1 };//长*高*宽
+		reg.stPosition = { 0,0,(NBT_Type::Int)szLayerIndex * 2 };//偏移
+		reg.stBlocks.Init(szBlockStatePaletteSize, reg.stSize);
 
+		size_t szBasePaletteStartIndex = reg.stBlocks.listBlockStatePalette.Size();//0
 
+		reg.stBlocks.listBlockStatePalette.AddBack(stAirBlock);//0
+		reg.stBlocks.listBlockStatePalette.AddBack(stSmoothStoneBlock);//1
+		reg.stBlocks.listBlockStatePalette.AddBack(stRepeaterBlock);//2
 
+		size_t szInstrumentPaletteStartIndex = reg.stBlocks.listBlockStatePalette.Size();//3
 
+		//初始化音符盒音色方块
+		for (const auto &it: nv.listInstrumentMap)//递增索引->不同方块
+		{
+			reg.stBlocks.listBlockStatePalette.AddBack(NoteBlock::GetInstrumentBlock((NoteBlock::Instrument)it));//直接映射
+		}
 
+		size_t szNoteBlockPaletteStartIndex = reg.stBlocks.listBlockStatePalette.Size();
+
+		//初始化音符盒方块
+		for (const auto &it : nv.listNote2Map)
+		{
+			reg.stBlocks.listBlockStatePalette.AddBack(NoteBlock{ .enInstrument = (NoteBlock::Instrument)it.instrument,.u8Note = it.key }.ToCompound());
+		}
+
+		MyAssert(reg.stBlocks.listBlockStatePalette.Size() == szBlockStatePaletteSize, "WTF?");
+
+		//到此已完成调色板准备
+		//设置区域最底为固定方块
+		for (size_t x = 0; x < szLineLong; ++x)
+		{
+			reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,0,0 }), 1);//1->stSmoothStoneBlock
+		}
+
+		//设置第二层与第三层（同时）
+		size_t x = 0;
+		for (const auto &note : noteLayer)
+		{
+			//根据乐谱信息设置
+			
+			//如果当前是空白，那么生成等量的方块与中继器（第2~3层）
+			if (note.enType == MyNote2::Type::Blank)
+			{
+				for (size_t i = 0; i < note.tick / 2; ++i)
+				{
+					reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,1,0 }), 2);//2层
+					reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,2,0 }), 2);//3层
+					++x;
+				}
+
+				continue;
+			}
+			else if (note.enType == MyNote2::Type::Note)//当前是音符（空白不被索引），查找索引，然后生成
+			{
+				//获取离散化映射索引
+				auto itFind = nv.mapNote2Index.find(note);
+				MyAssert(itFind != nv.mapNote2Index.end(), "WTF?");
+				size_t szNoteMapIndex = itFind->second;
+
+				reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,1,0 }), szInstrumentPaletteStartIndex + note.instrument);//2层，生成音符盒垫底方块
+				reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,2,0 }), szNoteBlockPaletteStartIndex + szNoteMapIndex);//3层，生成音符盒方块
+				++x;
+			}
+		}
+
+		//完成，插入区域中
+		fLitematic.stRegions.mapRegion.emplace(std::format("layer[{}]", szLayerIndex), std::move(reg));
 	}
 
 
