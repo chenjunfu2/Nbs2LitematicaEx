@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) try
 		//遍历当前层，计算最终长度
 		size_t szLineLong = 0;
 #if defined(NO_REPEATER) && defined(MATRIX_GEN)
-		bool bFirstBlank = noteLayer.front().enType == MyNote2::Type::Blank;
+		bool bFirstBlank = noteLayer.front().enType == MyNote2::Type::Blank;//空白开头添加额外虚拟空音符
 		szLineLong += (size_t)bFirstBlank;
 #endif
 		for (const auto &note : noteLayer)
