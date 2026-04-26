@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) try
 			}
 			else if (note.enType == MyNote2::Type::Blank)
 			{
-				szLineLong += note.tick / 2;//1个1档中继器为1个长度，tick是2的倍数，除以二得到中继器数量
+				szLineLong += note.tick;//nbs中的tick是redstone tick
 			}
 		}
 
@@ -129,7 +129,7 @@ int main(int argc, char *argv[]) try
 			//如果当前是空白，那么生成等量的方块与中继器（第2~3层）
 			if (note.enType == MyNote2::Type::Blank)
 			{
-				for (size_t i = 0; i < note.tick / 2; ++i)
+				for (size_t i = 0; i < note.tick; ++i)
 				{
 					reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,1,0 }), 1);//2层 -> 平滑石
 					reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,2,0 }), 2);//3层 -> 中继器
