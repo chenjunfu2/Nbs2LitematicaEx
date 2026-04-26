@@ -34,13 +34,36 @@ void print(std::format_string<Args...> fmt, Args&&... args)
 	fwrite(output.data(), 1, output.size(), stdout);
 }
 
+//找到一个唯一文件名
+std::string GenerateUniqueFilename(const std::string &sBeg, const std::string &sEnd, uint32_t u32TryCount = 10)//默认最多重试10次
+{
+	while (u32TryCount != 0)
+	{
+		//时间用[]包围
+		auto tmpPath = std::format("{}[{}]{}", sBeg, CodeTimer::GetSystemTime(), sEnd);//获取当前系统时间戳作为中间的部分
+		if (!NBT_IO::IsFileExist(tmpPath))
+		{
+			return tmpPath;
+		}
+
+		//等几ms在继续
+		CodeTimer::Sleep(std::chrono::milliseconds(10));
+		--u32TryCount;
+	}
+
+	//次数到上限直接返回空
+	return std::string{};
+}
+
 
 int main(int argc, char *argv[]) try
 {
 	MyAssert(argc == 2 && argv[1] != NULL, std::format("Use:\n{} [NBS File Name]\n", argv[0]).c_str());
 
+	std::string sInputFilePath{ argv[1] };
+
 	NBS_File fNbs;
-	MyAssert(NBS_IO::ReadNBSFromFile(fNbs, argv[1]), std::format("NBS File: [{}] Read Fail!\n", argv[1]).c_str());
+	MyAssert(NBS_IO::ReadNBSFromFile(fNbs, sInputFilePath), std::format("NBS File: [{}] Read Fail!\n", sInputFilePath).c_str());
 
 	//进行分层预处理
 	//获取每一层音符数，按照出现顺序生成音符盒调色板，中继器固定1挡位
@@ -76,7 +99,6 @@ int main(int argc, char *argv[]) try
 			continue;
 		}
 #endif
-
 
 		//遍历当前层，计算最终长度
 		size_t szLineLong = 0;
@@ -186,7 +208,30 @@ int main(int argc, char *argv[]) try
 	MyAssert(NBT_IO::CompressDataNoThrow(vStreamComp, vStream));
 	vStream.clear();
 	vStream.shrink_to_fit();
-	MyAssert(NBT_IO::WriteFile("test.litematic", vStreamComp));
+
+#ifndef _DEBUG
+	std::string sFilePath{};
+	{
+		//找到后缀名
+		size_t szPos = sInputFilePath.find_last_of('.');
+
+		//'.'前面的部分，不包含'.'
+		std::string sNewFileName = sInputFilePath.substr(0, szPos).append("_Convert");
+		//'.'后面的部分，包含'.'
+		std::string sNewFileExten = sInputFilePath.substr(szPos);
+
+		//唯一文件名
+		sFilePath = GenerateUniqueFilename(sNewFileName, sNewFileExten);
+		if (sFilePath.empty())
+		{
+			print("Unable to find a valid file name or lack of permission!\n");
+			return false;
+		}
+	}
+#else
+	std::string sFilePath{ "test.litematic" };
+#endif
+	MyAssert(NBT_IO::WriteFile(sFilePath, vStreamComp));
 
 	return 0;
 }
