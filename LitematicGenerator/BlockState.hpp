@@ -50,8 +50,8 @@ public:
 
 };
 
-const NormalBlock AirBlock = NormalBlock{ MU8STR("minecraft:air")};
-const NormalBlock SmoothStoneBlock = NormalBlock{ MU8STR("minecraft:smooth_stone")};
+const NormalBlock stAirBlock = NormalBlock{ MU8STR("minecraft:air")};
+const NormalBlock stSmoothStoneBlock = NormalBlock{ MU8STR("minecraft:smooth_stone")};
 
 
 struct DirectionBlock

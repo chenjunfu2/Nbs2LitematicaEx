@@ -7,28 +7,134 @@
 #include <vector>
 #include <unordered_map>
 
+struct Vec3I
+{
+public:
+	NBT_Type::Int x;
+	NBT_Type::Int y;
+	NBT_Type::Int z;
+
+public:
+	NBT_Type::Compound ToCompound(void) const//builtin无需move特化
+	{
+		return NBT_Type::Compound
+		{
+			{MU8STR("x"), x},
+			{MU8STR("y"), y},
+			{MU8STR("z"), z},
+		};
+	}
+};
+
+struct LitematicaBlocks
+{
+public:
+	size_t szLayerSize;//一层方块数 = x*z
+	size_t szTotalSize;//总方块数 = x*y*z
+
+	size_t szBitsPerEntry;//调色板索引占用的位数
+	size_t szEntryCount;//总调色板索引个数
+	size_t szMaxEntryValue;//当前占用的位数可存储的最大值（用于位掩码）
+
+	NBT_Type::List listBlockStatePalette;//方块调色板
+	NBT_Type::LongArray larrBlockStates;//方块位数组
+
+public:
+	//计算前导0数量
+	static uint32_t NumberOfLeadingZeros(uint32_t i)
+	{
+		if (i == 0)
+		{
+			return 32;
+		}
+
+		uint32_t n = 31;
+		if (i >= 1 << 16)
+		{
+			n -= 16;
+			i >>= 16;
+		}
+
+		if (i >= 1 << 8)
+		{
+			n -= 8;
+			i >>= 8;
+		}
+
+		if (i >= 1 << 4)
+		{
+			n -= 4;
+			i >>= 4;
+		}
+
+		if (i >= 1 << 2)
+		{
+			n -= 2;
+			i >>= 2;
+		}
+
+		return n - (i >> 1);
+	}
+
+	uint64_t RoundUpToPowerOfTwo(uint64_t value, uint64_t interval)
+	{
+		return (value + interval - 1) & ~(interval - 1);
+	}
+
+public:
+	LitematicaBlocks(size_t szPaletteSize, Vec3I v3iRegionSize)//初始化后，调色板需自行赋值
+	{
+		szLayerSize = (size_t)v3iRegionSize.x * (size_t)v3iRegionSize.z;
+		szTotalSize = szLayerSize * (size_t)v3iRegionSize.y;
+
+		//调色板大小-1后，用32-二进制最高位的前导0位数，得出调色板内的方块数量至少需要多少bit才能存储，这一步是为了获取位索引最大大小，max为了确保至少为2bit
+		szBitsPerEntry = std::max((uint32_t)2, (uint32_t)32 - NumberOfLeadingZeros(szPaletteSize - 1));
+		szEntryCount = szPaletteSize;
+		szMaxEntryValue = ((size_t)1 << szBitsPerEntry) - 1;
+		//计算两个数组大小
+		listBlockStatePalette.Resize(szPaletteSize, {});
+		larrBlockStates.resize(RoundUpToPowerOfTwo(szEntryCount * szBitsPerEntry, 64) / 64, 0);
+	}
+
+	void setAt(size_t index, size_t value)
+	{
+		size_t szStartOffset = index * szBitsPerEntry;
+		size_t szStartArrIndex = szStartOffset / 64;
+		size_t szEndArrIndex = (((index + 1) * szBitsPerEntry - 1) >> 6);
+		size_t szStartBitOffset = szStartOffset % 64;
+		larrBlockStates[szStartArrIndex] = larrBlockStates[szStartArrIndex] & ~(szMaxEntryValue << szStartBitOffset) | (value & szMaxEntryValue) << szStartBitOffset;
+
+		if (szStartArrIndex != szEndArrIndex)
+		{
+			size_t szEndOffset = 64 - szStartBitOffset;
+			size_t szClearLowBitsOffset = szBitsPerEntry - szEndOffset;
+			larrBlockStates[szEndArrIndex] = larrBlockStates[szEndArrIndex] >> szClearLowBitsOffset << szClearLowBitsOffset | (value & szMaxEntryValue) >> szEndOffset;
+		}
+	}
+
+	size_t getAt(size_t index)
+	{
+		size_t szStartOffset = index * szBitsPerEntry;
+		size_t szStartArrIndex = szStartOffset / 64;
+		size_t szEndArrIndex = (((index + 1L) * szBitsPerEntry - 1L) >> 6);
+		size_t szStartBitOffset = szStartOffset % 64;
+
+		if (szStartArrIndex == szEndArrIndex)
+		{
+			return (larrBlockStates[szStartArrIndex] >> szStartBitOffset & szMaxEntryValue);
+		}
+		else
+		{
+			size_t szEndOffset = 64 - szStartBitOffset;
+			return ((larrBlockStates[szStartArrIndex] >> szStartBitOffset | larrBlockStates[szEndArrIndex] << szEndOffset) & szMaxEntryValue);
+		}
+	}
+
+};
+
 struct LitematicFile
 {
 public:
-	struct Vec3I
-	{
-	public:
-		NBT_Type::Int x;
-		NBT_Type::Int y;
-		NBT_Type::Int z;
-
-	public:
-		NBT_Type::Compound ToCompound(void) const//builtin无需move特化
-		{
-			return NBT_Type::Compound
-			{
-				{MU8STR("x"), x},
-				{MU8STR("y"), y},
-				{MU8STR("z"), z},
-			};
-		}
-	};
-
 	struct MetaData
 	{
 	public:
@@ -81,12 +187,11 @@ public:
 	public:
 		Vec3I stPosition;
 		Vec3I stSize;
-		NBT_Type::List listBlockStatePalette;//仅接受已转换为NBT_Compound的方块，方块对象可复用
+		LitematicaBlocks stBlocks;
 		NBT_Type::List listEntities;
+		NBT_Type::List listTileEntities;
 		NBT_Type::List listPendingBlockTicks;
 		NBT_Type::List listPendingFluidTicks;
-		NBT_Type::List listTileEntities;
-		NBT_Type::LongArray larrBlockStates;
 
 	public:
 		NBT_Type::Compound ToCompound(void) const &
@@ -95,12 +200,12 @@ public:
 			{
 				{MU8STR("Position"),			stPosition.ToCompound()},
 				{MU8STR("Size"),				stSize.ToCompound()},
-				{MU8STR("BlockStatePalette"),	listBlockStatePalette},
+				{MU8STR("BlockStatePalette"),	stBlocks.listBlockStatePalette},
+				{MU8STR("BlockStates"),			stBlocks.larrBlockStates},
 				{MU8STR("Entities"),			listEntities},
+				{MU8STR("TileEntities"),		listTileEntities},
 				{MU8STR("PendingBlockTicks"),	listPendingBlockTicks},
 				{MU8STR("PendingFluidTicks"),	listPendingFluidTicks},
-				{MU8STR("TileEntities"),		listTileEntities},
-				{MU8STR("BlockStates"),			larrBlockStates},
 			};
 		}
 
@@ -110,12 +215,12 @@ public:
 			{
 				{MU8STR("Position"),			std::move(stPosition).ToCompound()},
 				{MU8STR("Size"),				std::move(stSize).ToCompound()},
-				{MU8STR("BlockStatePalette"),	std::move(listBlockStatePalette)},
+				{MU8STR("BlockStatePalette"),	std::move(stBlocks.listBlockStatePalette)},
+				{MU8STR("BlockStates"),			std::move(stBlocks.larrBlockStates)},
 				{MU8STR("Entities"),			std::move(listEntities)},
+				{MU8STR("TileEntities"),		std::move(listTileEntities)},
 				{MU8STR("PendingBlockTicks"),	std::move(listPendingBlockTicks)},
 				{MU8STR("PendingFluidTicks"),	std::move(listPendingFluidTicks)},
-				{MU8STR("TileEntities"),		std::move(listTileEntities)},
-				{MU8STR("BlockStates"),			std::move(larrBlockStates)},
 			};
 		}
 
@@ -185,3 +290,9 @@ public:
 	}
 
 };
+
+
+
+
+
+

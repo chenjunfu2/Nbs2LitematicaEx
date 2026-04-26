@@ -1,4 +1,5 @@
-﻿#include "LitematicGenerator.hpp"
+﻿#include "LitematicFile.hpp"
+#include "MyNote.hpp"
 
 #include <nbs_cpp/NBS_All.hpp>
 #include <util/CodeTimer.hpp>
@@ -41,12 +42,24 @@ int main(int argc, char *argv[]) try
 	//获取每一层音符数，按照出现顺序生成音符盒调色板，中继器固定1挡位
 	//在最底层生成普通方块垫底，第二层生成音符盒音色方块和普通方块，第三层生成音符盒与中继器
 
+	LitematicFile fLitematic;
+	RepeaterBlock stRepeaterBlock{};
+
+	auto nbsNoteLayerList = ToMyNoteList2(ToMyNoteList(fNbs));
+	for (const auto &noteLayer : nbsNoteLayerList)//处理每一层
+	{
+		//首先进行离散化，对每个非空白note分配一个值
+		auto nv = ToNoteVal(noteLayer);
+		//计算投影选区调色板（大小为不同的音符数加音色种类加3（3的组成有空气方块、实体方块、1挡中继器方块））
+		LitematicFile::Region reg;
+		size_t szBlockStatePaletteSize = nv.szInstrumentCount + nv.mapNoteSubIndex.size() + 3;
 
 
 
 
 
 
+	}
 
 
 
