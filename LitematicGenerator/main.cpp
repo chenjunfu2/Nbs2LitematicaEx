@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) try
 	};
 
 	//可复用方块
-	RepeaterBlock stRepeaterBlock{ .enFacing = RepeaterBlock::Facing::east };//朝向为东
+	RepeaterBlock stRepeaterBlock{ .enFacing = RepeaterBlock::Facing::west };//朝向为西
 
 	auto nbsNoteLayerList = ToMyNoteList2(ToMyNoteList(fNbs));
 	size_t szLayerIndex = 0;
