@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) try
 		//初始化音符盒音色方块
 		for (const auto &it: nv.listInstrumentMap)//递增索引->不同方块
 		{
-			reg.stBlocks.listBlockStatePalette.AddBack(NoteBlock::GetInstrumentBlock((NoteBlock::Instrument)it));//直接映射
+			reg.stBlocks.listBlockStatePalette.AddBack(NoteBlock::GetInstrumentBlock((NoteBlock::Instrument)it));//音色直接映射
 		}
 
 		size_t szNoteBlockPaletteStartIndex = reg.stBlocks.listBlockStatePalette.Size();
@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) try
 		//初始化音符盒方块
 		for (const auto &it : nv.listNote2Map)
 		{
-			reg.stBlocks.listBlockStatePalette.AddBack(NoteBlock{ .enInstrument = (NoteBlock::Instrument)it.instrument,.u8Note = it.key }.ToCompound());
+			reg.stBlocks.listBlockStatePalette.AddBack(NoteBlock{ .enInstrument = (NoteBlock::Instrument)it.instrument,.u8Note = (uint8_t)(it.key - 33) }.ToCompound());//key-33映射
 		}
 
 		MyAssert(reg.stBlocks.listBlockStatePalette.Size() == szBlockStatePaletteSize, "WTF?");
