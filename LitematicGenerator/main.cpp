@@ -7,7 +7,6 @@
 #include <format>
 
 #define NO_REPEATER
-#define USE_UNIFORM_SPACE
 
 //int main(void)
 //{
@@ -78,11 +77,7 @@ int main(int argc, char *argv[]) try
 			}
 			else if (note.enType == MyNote2::Type::Blank)
 			{
-#ifndef USE_UNIFORM_SPACE
 				szLineLong += note.tick;//nbs中的tick是redstone tick
-#else
-				szLineLong += 1;
-#endif
 			}
 		}
 
@@ -139,11 +134,7 @@ int main(int argc, char *argv[]) try
 					++x;
 				}
 #else
-#ifndef USE_UNIFORM_SPACE
 				x += note.tick;
-#else
-				x += 1;
-#endif
 #endif
 				continue;
 			}
