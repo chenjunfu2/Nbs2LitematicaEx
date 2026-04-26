@@ -151,7 +151,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BlockState.hpp" />
-    <ClInclude Include="LitematicGenerator.hpp" />
+    <ClInclude Include="LitematicFile.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt" />

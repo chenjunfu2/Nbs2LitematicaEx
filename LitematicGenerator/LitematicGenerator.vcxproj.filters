@@ -20,7 +20,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="LitematicGenerator.hpp">
+    <ClInclude Include="LitematicFile.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="BlockState.hpp">
