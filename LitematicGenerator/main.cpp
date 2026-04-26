@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) try
 	};
 
 	//可复用方块
-	RepeaterBlock stRepeaterBlock{};
+	RepeaterBlock stRepeaterBlock{ .enFacing = RepeaterBlock::Facing::east };//朝向为东
 
 	auto nbsNoteLayerList = ToMyNoteList2(ToMyNoteList(fNbs));
 	size_t szLayerIndex = 0;
@@ -131,8 +131,8 @@ int main(int argc, char *argv[]) try
 			{
 				for (size_t i = 0; i < note.tick / 2; ++i)
 				{
-					reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,1,0 }), 2);//2层
-					reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,2,0 }), 2);//3层
+					reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,1,0 }), 1);//2层 -> 平滑石
+					reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,2,0 }), 2);//3层 -> 中继器
 					++x;
 				}
 
