@@ -40,7 +40,7 @@ public:
 	NBT_Type::String strBlockName;
 
 public:
-	NBT_Type::Compound ToCompound(void)
+	NBT_Type::Compound ToCompound(void) const
 	{
 		return NBT_Type::Compound
 		{
@@ -86,7 +86,7 @@ public:
 	Direction enDirection = Direction::x;
 
 public:
-	NBT_Type::Compound ToCompound(void)
+	NBT_Type::Compound ToCompound(void) const
 	{
 		return NBT_Type::Compound
 		{
@@ -200,7 +200,7 @@ public:
 	bool bPowered = false;//t/f
 
 public:
-	NBT_Type::Compound ToCompound(void)
+	NBT_Type::Compound ToCompound(void) const
 	{
 		return NBT_Type::Compound
 		{
@@ -213,6 +213,11 @@ public:
 				},
 			},
 		};
+	}
+
+	NBT_Type::Compound GetCurrentInstrumentBlock(void) const
+	{
+		return GetInstrumentBlock(enInstrument);
 	}
 
 };
@@ -276,7 +281,7 @@ public:
 	}
 
 public:
-	NBT_Type::Compound ToCompound(void)
+	NBT_Type::Compound ToCompound(void) const
 	{
 		return NBT_Type::Compound
 		{
