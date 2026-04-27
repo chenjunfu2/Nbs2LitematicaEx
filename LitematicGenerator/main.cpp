@@ -37,7 +37,7 @@ std::string GenerateUniqueFilename(const std::string &sBeg, const std::string &s
 
 void PrintHelp(const char *pExeName)
 {
-	print("Usage: {} <NBS file> [option]\n"
+	print("\nUsage: {} <NBS file> [option]\n"
 		"Option (must be a single argument, starts with '-' or '/'):\n"
 		"  -e, /e    No Exclude Space\n"
 		"  -r, /r    No Repeater\n"
@@ -53,7 +53,10 @@ int main(int argc, char *argv[]) try
 {
 	if (argc < 2 || argc > 3)//至少2个命令，最多3个
 	{
-		print("Error: Invalid argument count (expected 1 or 2, got {}).\n", argc - 1);
+		if (argc != 1)
+		{
+			print("Error: Invalid argument count (expected 1 or 2, got {}).\n", argc - 1);
+		}
 		PrintHelp(argv[0]);
 		return 0;
 	}
