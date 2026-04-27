@@ -177,7 +177,7 @@ int main(int argc, char *argv[]) try
 		size_t szBlockStatePaletteSize = nv.mapInstrumentIndex.size() + nv.mapNote2Index.size() + 3;
 
 		reg.stSize = { (NBT_Type::Int)szLineLong,3,1 };//长*高*宽
-		reg.stPosition = { 0,0,(NBT_Type::Int)szLayerIndex * 2 };//偏移
+		reg.stPosition = { 0, 0 ,(NBT_Type::Int)(szLayerIndex * 2) };//偏移
 		reg.stBlocks.Init(szBlockStatePaletteSize, reg.stSize);
 
 		size_t szBasePaletteStartIndex = reg.stBlocks.listBlockStatePalette.Size();//0
