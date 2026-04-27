@@ -114,11 +114,7 @@ int main(int argc, char *argv[]) try
 			}
 			else if (note.enType == MyNote2::Type::Blank)
 			{
-#if !defined(NO_REPEATER) || !defined(MATRIX_GEN)
-				szLineLong += note.tick;//nbs中的tick是redstone tick
-#else
-				szLineLong += (size_t)note.tick * 2 - 1;
-#endif
+				szLineLong += (size_t)note.tick * 2 - 1;//nbs中的tick是redstone tick，根据运算得到矩阵宽度
 			}
 		}
 
@@ -177,20 +173,23 @@ int main(int argc, char *argv[]) try
 			//如果当前是空白，那么生成等量的方块与中继器（第2~3层）
 			if (note.enType == MyNote2::Type::Blank)
 			{
-#ifndef NO_REPEATER
-				for (size_t i = 0; i < note.tick; ++i)
+				bool bGenBlock = false;
+				for (size_t i = 0; i < (size_t)note.tick * 2 - 1; ++i)
 				{
-					reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,1,0 }), 1);//2层 -> 平滑石
-					reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,2,0 }), 2);//3层 -> 中继器
+#ifndef NO_REPEATER
+					if (bGenBlock)
+					{
+						reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,2,0 }), 1);//3层 -> 平滑石
+					}
+					else
+					{
+
+						reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,1,0 }), 1);//2层 -> 平滑石
+						reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,2,0 }), 2);//3层 -> 中继器
+					}
+#endif
 					++x;
 				}
-#else
-#ifndef MATRIX_GEN
-				x += note.tick;
-#else
-				x += (size_t)note.tick * 2 - 1;
-#endif
-#endif
 				continue;
 			}
 			else if (note.enType == MyNote2::Type::Note)//当前是音符（空白不被索引），查找索引，然后生成
@@ -210,7 +209,10 @@ int main(int argc, char *argv[]) try
 					szNoteInstrumentMapIndex = itFind->second;
 				}
 
-				reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,0,0 }), 1);//1层音色方块垫底->stSmoothStoneBlock
+				if ((uint8_t)note.instrument == (uint8_t)NoteBlock::Instrument::snare)//重力方块
+				{
+					reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,0,0 }), 1);//生成1层音色方块垫底->stSmoothStoneBlock
+				}
 				reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,1,0 }), szInstrumentPaletteStartIndex + szNoteInstrumentMapIndex);//2层，生成音符盒垫底方块
 				reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,2,0 }), szNoteBlockPaletteStartIndex + szNoteMapIndex);//3层，生成音符盒方块
 				++x;
