@@ -225,10 +225,10 @@ int main(int argc, char *argv[]) try
 			//如果当前是空白，那么生成等量的方块与中继器（第2~3层）
 			if (note.enType == MyNote2::Type::Blank)
 			{
-				bool bGenBlock = false;
-				for (size_t i = 0; i < (size_t)note.tick * 2 - 1; ++i)
+				if (!bNoRepeater)
 				{
-					if (!bNoRepeater)
+					bool bGenBlock = false;
+					for (size_t i = 0; i < (size_t)note.tick * 2 - 1; ++i)
 					{
 						if (bGenBlock)
 						{
@@ -241,11 +241,14 @@ int main(int argc, char *argv[]) try
 							reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,2,0 }), 2);//3层 -> 中继器
 						}
 						bGenBlock = !bGenBlock;
-					}
 
-					++x;
+						++x;
+					}
 				}
-				continue;
+				else
+				{
+					x += (size_t)note.tick * 2 - 1;
+				}
 			}
 			else if (note.enType == MyNote2::Type::Note)//当前是音符（空白不被索引），查找索引，然后生成
 			{//设置第1~3层
