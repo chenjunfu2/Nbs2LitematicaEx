@@ -42,6 +42,7 @@ void PrintHelp(const char *pExeName)
 		"  -e, /e    No Exclude Space\n"
 		"  -r, /r    No Repeater\n"
 		"  -er, /er  No Exclude Space and No Repeater\n"
+		"By default (no option), ExcludeSpace and Repeater are enabled.\n"
 		"Examples:\n"
 		"  {} song.nbs -e\n"
 		"  {} song.nbs /er\n",
