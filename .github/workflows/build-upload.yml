@@ -1,4 +1,4 @@
-name: Nbs2LitematicaEx-LitematicGenerator build-upload
+name: LitematicGenerator build-upload
 
 on:
   workflow_dispatch:
@@ -44,5 +44,5 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: Nbs2LitematicaEx-LitematicGenerator-${{ matrix.compiler }}
+        name: LitematicGenerator-${{ matrix.compiler }}
         path: artifacts/
