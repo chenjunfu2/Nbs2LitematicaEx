@@ -272,7 +272,7 @@ NoteVal ToNoteVal(const MyNoteList2 &listNote2)
 
 		//统计不同的音色种类
 		{
-			auto [itEmplace, bSuccess] = valNote.mapInstrumentIndex.try_emplace(it.instrument);
+			auto [itEmplace, bSuccess] = valNote.mapInstrumentIndex.try_emplace(it.instrument, valNote.listInstrumentMap.size());
 			if (bSuccess)
 			{
 				valNote.listInstrumentMap.push_back(it.instrument);
