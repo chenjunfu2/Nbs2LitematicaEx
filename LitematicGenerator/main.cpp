@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) try
 	std::filesystem::path pathInputFile{ argv[1] };
 
 	NBS_File fNbs;
-	MyAssert(NBS_IO::ReadNBSFromFile(fNbs, pathInputFile), std::format("NBS File: [{}] Read Fail!\n", pathInputFile).c_str());
+	MyAssert(NBS_IO::ReadNBSFromFile(fNbs, pathInputFile), std::format("NBS File: [{}] Read Fail!\n", pathInputFile.string()).c_str());
 
 	//进行分层预处理
 	//获取每一层音符数，按照出现顺序生成音符盒调色板，中继器固定1挡位
