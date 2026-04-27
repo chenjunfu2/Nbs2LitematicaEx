@@ -103,16 +103,14 @@ int main(int argc, char *argv[]) try
 #endif
 
 		//遍历当前层，计算最终长度
-		size_t szLineLong = 0;
-#if defined(NO_REPEATER) && defined(MATRIX_GEN)
 		bool bFirstBlank = noteLayer.front().enType == MyNote2::Type::Blank;//空白开头添加额外虚拟空音符
-		szLineLong += (size_t)bFirstBlank;
-#endif
+		size_t szLineLong = 0;
+		szLineLong += (size_t)bFirstBlank;//虚拟音
 		for (const auto &note : noteLayer)
 		{
 			if (note.enType == MyNote2::Type::Note)
 			{
-				szLineLong += 1;
+				++szLineLong;
 			}
 			else if (note.enType == MyNote2::Type::Blank)
 			{
@@ -162,9 +160,16 @@ int main(int argc, char *argv[]) try
 
 		//设置第二层与第三层（同时）
 		size_t x = 0;
-#if defined(NO_REPEATER) && defined(MATRIX_GEN)
-		x += (size_t)bFirstBlank;
+
+		if (bFirstBlank)//虚拟音
+		{
+#ifndef NO_REPEATER
+			reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,1,0 }), 1);//2层 -> 平滑石
+			reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,2,0 }), 2);//3层 -> 中继器
 #endif
+			++x;
+		}
+		
 		for (const auto &note : noteLayer)
 		{
 			//根据乐谱信息设置
