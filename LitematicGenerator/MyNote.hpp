@@ -164,28 +164,14 @@ NoteLayerList ToMyNoteList(const NBS_File &fNBS)
 	size_t last = 0;
 	for (size_t i = 0; i < szLayerSize; ++i)
 	{
-		if (listNoteLayer[i].empty())//找到不为静音的层
+		if (!listNoteLayer[i].empty())
 		{
-			if (!listNoteLayer[last].empty())//如果之前的层不是静音的，那么替换
+			if (last != i)
 			{
-				last = i;
+				listNoteLayer[last] = std::move(listNoteLayer[i]);//把找到的不为静音的层替换
 			}
-			continue;
+			++last;//移动到下一个位置
 		}
-
-		//走到这里代表i必不为empty
-		if (listNoteLayer[last].empty())
-		{
-			listNoteLayer[last] = std::move(listNoteLayer[i]);//把找到的不为静音的层替换
-			//确保清除，然后移动到下一个静音位置
-			listNoteLayer[i].clear();
-			++last;
-		}
-	}
-
-	if (!listNoteLayer[last].empty())
-	{
-		++last;
 	}
 
 	listNoteLayer.resize(last);
