@@ -142,7 +142,7 @@ namespace std
 using MyNoteList = std::vector<MyNote>;
 using NoteLayerList = std::vector<MyNoteList>;
 
-NoteLayerList ToMyNoteList(const NBS_File &fNBS)
+NoteLayerList ToMyNoteList(const NBS_File &fNBS, bool bNoExcludeSpace)
 {
 	size_t szLayerSize = fNBS.listLayer.size();
 
@@ -159,24 +159,25 @@ NoteLayerList ToMyNoteList(const NBS_File &fNBS)
 		listNoteLayer[it.layer].emplace_back(it.tick, it.instrument, it.key);
 	}
 
-#ifndef NO_EXCLUDE_SPACE
-	//裁剪静音的层
-	size_t last = 0;
-	for (size_t i = 0; i < szLayerSize; ++i)
+	if (!bNoExcludeSpace)
 	{
-		if (!listNoteLayer[i].empty())
+		//裁剪静音的层
+		size_t last = 0;
+		for (size_t i = 0; i < szLayerSize; ++i)
 		{
-			if (last != i)
+			if (!listNoteLayer[i].empty())
 			{
-				listNoteLayer[last] = std::move(listNoteLayer[i]);//把找到的不为静音的层替换
+				if (last != i)
+				{
+					listNoteLayer[last] = std::move(listNoteLayer[i]);//把找到的不为静音的层替换
+				}
+				++last;//移动到下一个位置
 			}
-			++last;//移动到下一个位置
 		}
+
+		listNoteLayer.resize(last);
 	}
-
-	listNoteLayer.resize(last);
-#endif
-
+	
 	return listNoteLayer;
 }
 

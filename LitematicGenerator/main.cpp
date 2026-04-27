@@ -1,6 +1,4 @@
 ﻿#include "LitematicFile.hpp"
-
-//#define NO_EXCLUDE_SPACE
 #include "MyNote.hpp"
 
 #include <nbs_cpp/NBS_All.hpp>
@@ -8,25 +6,6 @@
 #include <util/MyAssert.hpp>
 #include <format>
 #include <filesystem>
-
-//#define NO_REPEATER
-
-//int main(void)
-//{
-//	auto ab = AirBlock{}.ToCompound();
-//	auto nb = NoteBlock{}.ToCompound();
-//	auto rb = RepeaterBlock{}.ToCompound();
-//
-//	NBT_Print{}("AirBlock:\n");
-//	NBT_Helper::Print(ab);
-//	NBT_Print{}("\n\nNoteBlock:\n");
-//	NBT_Helper::Print(nb);
-//	NBT_Print{}("\n\nRepeaterBlock:\n");
-//	NBT_Helper::Print(rb);
-//	NBT_Print{}("\n");
-//
-//	return 0;
-//}
 
 template<typename... Args>
 void print(std::format_string<Args...> fmt, Args&&... args)
@@ -56,13 +35,85 @@ std::string GenerateUniqueFilename(const std::string &sBeg, const std::string &s
 	return std::string{};
 }
 
+void PrintHelp(const char *pExeName)
+{
+	print("Usage: {} <NBS file> [option]\n"
+		"Option (must be a single argument, starts with '-' or '/'):\n"
+		"  -e, /e    No Exclude Space\n"
+		"  -r, /r    No Repeater\n"
+		"  -er, /er  No Exclude Space and No Repeater\n"
+		"Examples:\n"
+		"  {} song.nbs -e\n"
+		"  {} song.nbs /er\n",
+		pExeName, pExeName, pExeName);
+}
 
 int main(int argc, char *argv[]) try
 {
-	MyAssert(argc == 2 && argv[1] != NULL, std::format("Use:\n{} [NBS File Name]\n", argv[0]).c_str());
+	if (argc < 2 || argc > 3)//至少2个命令，最多3个
+	{
+		print("Error: Invalid argument count (expected 1 or 2, got {}).\n", argc - 1);
+		PrintHelp(argv[0]);
+		return 0;
+	}
 
+	//1必须是路径
 	std::filesystem::path pathInputFile{ argv[1] };
 
+	//命令行解析2
+	bool bNoExcludeSpace = false;//-e
+	bool bNoRepeater = false;//-r
+
+	if (argc > 2)
+	{
+		std::string_view svArg = { argv[2] };
+		if (svArg.size() < 2 || svArg.size() > 3)//至少要-开头或/开头并跟随一个选项，并且不能选项过多
+		{
+			print("Error: Option '{}' has invalid length (must be 2 or 3 characters, e.g. -e, -r, -er).\n", svArg);
+			PrintHelp(argv[0]);
+			return 0;
+		}
+
+		//参数验证失败
+		if (svArg[0] != '-' && svArg[0] != '/')
+		{
+			print("Error: Option '{}' must start with '-' or '/'.\n", svArg);
+			PrintHelp(argv[0]);
+			return 0;
+		}
+
+		for (size_t i = 1; i < svArg.size(); ++i)
+		{
+			switch (svArg[i])
+			{
+			case 'e':
+				if (bNoExcludeSpace)
+				{
+					print("Error: Duplicate option 'e'.\n");
+					PrintHelp(argv[0]);
+					return 0;
+				}
+				bNoExcludeSpace = true;
+				break;
+			case 'r':
+				if (bNoRepeater)
+				{
+					print("Error: Duplicate option 'r'.\n");
+					PrintHelp(argv[0]);
+					return 0;
+				}
+				bNoRepeater = true;
+				break;
+			default:
+				print("Error: Unknown option character '{}' in '{}' (allowed: e, r).\n", svArg[i], svArg);
+				PrintHelp(argv[0]);
+				return 0;
+				break;
+			}
+		}
+	}
+
+	//读取NBS文件
 	NBS_File fNbs;
 	MyAssert(NBS_IO::ReadNBSFromFile(fNbs, pathInputFile), std::format("NBS File: [{}] Read Fail!\n", pathInputFile.string()).c_str());
 
@@ -89,17 +140,15 @@ int main(int argc, char *argv[]) try
 	//可复用方块
 	RepeaterBlock stRepeaterBlock{ .enFacing = RepeaterBlock::Facing::west };//朝向为西
 
-	auto nbsNoteLayerList = ToMyNoteList2(ToMyNoteList(fNbs));
+	auto nbsNoteLayerList = ToMyNoteList2(ToMyNoteList(fNbs, bNoExcludeSpace));
 	size_t szLayerIndex = 0;
 	for (const auto &noteLayer : nbsNoteLayerList)//处理每一层
 	{
-#ifdef NO_EXCLUDE_SPACE
-		if (noteLayer.empty())//移动
+		if (noteLayer.empty())//空层直接移动
 		{
 			++szLayerIndex;
 			continue;
 		}
-#endif
 
 		//遍历当前层，计算最终长度
 		bool bFirstBlank = noteLayer.front().enType == MyNote2::Type::Blank;//空白开头添加额外虚拟空音符
@@ -158,9 +207,10 @@ int main(int argc, char *argv[]) try
 
 		if (bFirstBlank)//虚拟音
 		{
-#ifndef NO_REPEATER
-			reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,2,0 }), 1);//3层 -> 平滑石
-#endif
+			if (!bNoRepeater)
+			{
+				reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,2,0 }), 1);//3层 -> 平滑石
+			}
 			++x;
 		}
 		
@@ -174,19 +224,21 @@ int main(int argc, char *argv[]) try
 				bool bGenBlock = false;
 				for (size_t i = 0; i < (size_t)note.tick * 2 - 1; ++i)
 				{
-#ifndef NO_REPEATER
-					if (bGenBlock)
+					if (!bNoRepeater)
 					{
-						reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,2,0 }), 1);//3层 -> 平滑石
-					}
-					else
-					{
+						if (bGenBlock)
+						{
+							reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,2,0 }), 1);//3层 -> 平滑石
+						}
+						else
+						{
 
-						reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,1,0 }), 1);//2层 -> 平滑石
-						reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,2,0 }), 2);//3层 -> 中继器
+							reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,1,0 }), 1);//2层 -> 平滑石
+							reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,2,0 }), 2);//3层 -> 中继器
+						}
+						bGenBlock = !bGenBlock;
 					}
-					bGenBlock = !bGenBlock;
-#endif
+
 					++x;
 				}
 				continue;
