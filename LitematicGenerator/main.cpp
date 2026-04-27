@@ -159,8 +159,7 @@ int main(int argc, char *argv[]) try
 		if (bFirstBlank)//虚拟音
 		{
 #ifndef NO_REPEATER
-			reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,1,0 }), 1);//2层 -> 平滑石
-			reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,2,0 }), 2);//3层 -> 中继器
+			reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,2,0 }), 1);//3层 -> 平滑石
 #endif
 			++x;
 		}
