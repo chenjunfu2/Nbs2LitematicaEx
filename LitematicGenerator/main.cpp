@@ -1,15 +1,16 @@
 ﻿#include "LitematicFile.hpp"
 
-#define NO_EXCLUDE_SPACE
+//#define NO_EXCLUDE_SPACE
 #include "MyNote.hpp"
 
 #include <nbs_cpp/NBS_All.hpp>
 #include <util/CodeTimer.hpp>
 #include <util/MyAssert.hpp>
 #include <format>
+#include <filesystem>
 
-#define NO_REPEATER
-#define MATRIX_GEN
+//#define NO_REPEATER
+//#define MATRIX_GEN
 
 //int main(void)
 //{
@@ -61,10 +62,10 @@ int main(int argc, char *argv[]) try
 {
 	MyAssert(argc == 2 && argv[1] != NULL, std::format("Use:\n{} [NBS File Name]\n", argv[0]).c_str());
 
-	std::string sInputFilePath{ argv[1] };
+	std::filesystem::path pathInputFile{ argv[1] };
 
 	NBS_File fNbs;
-	MyAssert(NBS_IO::ReadNBSFromFile(fNbs, sInputFilePath), std::format("NBS File: [{}] Read Fail!\n", sInputFilePath).c_str());
+	MyAssert(NBS_IO::ReadNBSFromFile(fNbs, pathInputFile), std::format("NBS File: [{}] Read Fail!\n", pathInputFile).c_str());
 
 	//进行分层预处理
 	//获取每一层音符数，按照出现顺序生成音符盒调色板，中继器固定1挡位
@@ -77,7 +78,7 @@ int main(int argc, char *argv[]) try
 			.stEnclosingSize{},//偷懒不写
 			.strAuthor{MU8STR("AutoGen")},
 			.strDescription{},
-			.strName{sInputFilePath},
+			.strName{pathInputFile.filename()},
 			.iRegionCount = 0,//生成完成后再修改
 			.lTimeCreated = (NBT_Type::Long)CodeTimer::GetSystemTime(),
 			.lTimeModified = (NBT_Type::Long)CodeTimer::GetSystemTime(),
@@ -226,13 +227,13 @@ int main(int argc, char *argv[]) try
 	vStream.shrink_to_fit();
 
 #ifndef _DEBUG
-	std::string sFilePath{};
+	std::string sFilePath = pathInputFile.string();
 	{
 		//找到后缀名
-		size_t szPos = sInputFilePath.find_last_of('.');
+		size_t szPos = sFilePath.find_last_of('.');
 
 		//'.'前面的部分，不包含'.'
-		std::string sNewFileName = sInputFilePath.substr(0, szPos).append("_");
+		std::string sNewFileName = sFilePath.substr(0, szPos).append("_");
 		//'.'后面的部分，包含'.'
 		std::string sNewFileExten = ".litematic";
 
