@@ -10,7 +10,6 @@
 #include <filesystem>
 
 //#define NO_REPEATER
-//#define MATRIX_GEN
 
 //int main(void)
 //{
