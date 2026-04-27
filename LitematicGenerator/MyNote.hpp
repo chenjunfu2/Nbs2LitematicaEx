@@ -271,9 +271,17 @@ NoteVal ToNoteVal(const MyNoteList2 &listNote2)
 	NoteVal valNote;
 	for (const auto &it : listNote2)
 	{
+		//空白丢弃
 		if (it.enType == MyNote2::Type::Blank)
 		{
 			continue;//丢弃空白，空白不作为音符出现
+		}
+
+		//音域限制
+		if (it.enType == MyNote2::Type::Note &&
+			(it.key < 33 || it.key > 33 + 24))
+		{
+			continue;//丢弃超出音域的音符
 		}
 
 		//统计不同的音色种类
