@@ -178,6 +178,9 @@ int main(int argc, char *argv[]) try
 
 		reg.stSize = { (NBT_Type::Int)szLineLong,3,1 };//长*高*宽
 		reg.stPosition = { 0, 0 ,(NBT_Type::Int)(szLayerIndex * 2) };//偏移
+		//reg.stPosition = { (NBT_Type::Int)(szLayerIndex % 2) , (NBT_Type::Int)(szLayerIndex / 37 * 4) ,(NBT_Type::Int)(szLayerIndex % 37) };//偏移
+
+		//初始化方块生成器
 		reg.stBlocks.Init(szBlockStatePaletteSize, reg.stSize);
 
 		size_t szBasePaletteStartIndex = reg.stBlocks.listBlockStatePalette.Size();//0
