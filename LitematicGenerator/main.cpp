@@ -186,6 +186,7 @@ int main(int argc, char *argv[]) try
 						reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,1,0 }), 1);//2层 -> 平滑石
 						reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,2,0 }), 2);//3层 -> 中继器
 					}
+					bGenBlock = !bGenBlock;
 #endif
 					++x;
 				}
