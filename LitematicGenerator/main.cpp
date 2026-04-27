@@ -197,14 +197,20 @@ int main(int argc, char *argv[]) try
 				size_t szNoteMapIndex;
 				{
 					auto itFind = nv.mapNote2Index.find(note);
-					MyAssert(itFind != nv.mapNote2Index.end(), "WTF?");
+					//因为映射过程去除了无法生成的超音域音，所以需要在音无法找到的时候，生成为方块以传递信号
+					if (itFind == nv.mapNote2Index.end())//MyAssert(itFind != nv.mapNote2Index.end(), "WTF?");
+					{
+						reg.stBlocks.SetBlock(reg.stBlocks.GetSpatialIndex({ (NBT_Type::Int)x,2,0 }), 1);//3层 -> 平滑石
+						++x;
+						continue;//跳过剩余生成
+					}
 					szNoteMapIndex = itFind->second;
 				}
 
 				size_t szNoteInstrumentMapIndex;
 				{
 					auto itFind = nv.mapInstrumentIndex.find(note.instrument);
-					MyAssert(itFind != nv.mapInstrumentIndex.end(), "WTF?");
+					MyAssert(itFind != nv.mapInstrumentIndex.end(), "WTF?");//音色目前依旧是必须找到的，因为对应音色的音符盒至少存在一个，否则上面就会返回
 					szNoteInstrumentMapIndex = itFind->second;
 				}
 
