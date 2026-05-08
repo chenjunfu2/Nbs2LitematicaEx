@@ -492,3 +492,7 @@ catch (const std::exception &e)
 	printerr("ERROR!\bcatch std::exception: [{}]\n", e.what());
 	throw e;
 }
+
+
+//新思路：把音高与乐器类型混合为一个值，时间轴为另一个值，进行SIATEC
+
