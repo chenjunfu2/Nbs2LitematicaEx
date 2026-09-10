@@ -241,6 +241,38 @@ NoteLayerList2 ToMyNoteList2(const NoteLayerList &listNoteLayer)//排序，处�
 	return listNoteLayer2;
 }
 
+
+MyNoteList MergeAndSortMyNoteList(const NoteLayerList &listNoteLayer)//排序，处理空白
+{
+	MyNoteList fullSortList{};
+
+	for (const auto &noteLayer : listNoteLayer)
+	{
+		//合并所有音符
+		fullSortList.insert(fullSortList.end(), noteLayer.begin(), noteLayer.end());
+	}
+
+	//排序所有音符（按照tick序-instrument序-key序）
+	std::ranges::sort(fullSortList,
+		[](const MyNote &l, const MyNote &r) -> bool
+		{
+			if (l.tick != r.tick)
+			{
+				return l.tick < r.tick;
+			}
+
+			if (l.key != r.key)
+			{
+				return l.key < r.key;
+			}
+
+			return l.instrument < r.instrument;
+		}
+	);
+
+	return fullSortList;
+}
+
 //离散化映射
 struct NoteVal
 {
@@ -295,3 +327,38 @@ NoteVal ToNoteVal(const MyNoteList2 &listNote2)
 
 	return valNote;
 }
+
+
+//离散化映射
+struct NoteVal2
+{
+	std::unordered_map<NBS_File::BYTE, size_t> mapInstrumentIndex;//音色->调色板索引
+	std::vector<NBS_File::BYTE> listInstrumentMap;//调色板索引->音色
+	std::vector<size_t> listEncodeInstrument;//调色板索引形式的音符序列
+};
+
+NoteVal2 ToNoteVal2(const MyNoteList &listNote)
+{
+	NoteVal2 valNote;
+	for (const auto &it : listNote)
+	{
+		//音域限制
+		if (it.key < 33 || it.key > 33 + 24)
+		{
+			continue;//丢弃超出音域的音符
+		}
+
+		//统计不同的音色种类
+		{
+			auto [itEmplace, bSuccess] = valNote.mapInstrumentIndex.try_emplace(it.instrument, valNote.listInstrumentMap.size());
+			if (bSuccess)
+			{
+				valNote.listInstrumentMap.push_back(it.instrument);
+			}
+			//valNote.listEncodeInstrument.push_back(itEmplace->second);
+		}
+	}
+
+	return valNote;
+}
+
