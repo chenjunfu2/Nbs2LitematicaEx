@@ -106,7 +106,7 @@ public:
 	{
 		size_t szStartOffset = szSpatialIndex * szBitsPerEntry;
 		size_t szStartArrIndex = szStartOffset / 64;
-		size_t szEndArrIndex = (((szSpatialIndex + 1) * szBitsPerEntry - 1) >> 6);
+		size_t szEndArrIndex = (((szSpatialIndex + 1) * szBitsPerEntry - 1) / 64);
 		size_t szStartBitOffset = szStartOffset % 64;
 		larrBlockStates[szStartArrIndex] = larrBlockStates[szStartArrIndex] & ~(szMaxEntryValue << szStartBitOffset) | (szBlockPaletteIndex & szMaxEntryValue) << szStartBitOffset;
 
@@ -122,7 +122,7 @@ public:
 	{
 		size_t szStartOffset = szSpatialIndex * szBitsPerEntry;
 		size_t szStartArrIndex = szStartOffset / 64;
-		size_t szEndArrIndex = (((szSpatialIndex + 1L) * szBitsPerEntry - 1L) >> 6);
+		size_t szEndArrIndex = (((szSpatialIndex + 1L) * szBitsPerEntry - 1L) / 64);
 		size_t szStartBitOffset = szStartOffset % 64;
 
 		if (szStartArrIndex == szEndArrIndex)
