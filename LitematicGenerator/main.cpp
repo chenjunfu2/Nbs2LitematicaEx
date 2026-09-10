@@ -407,18 +407,14 @@ int main(int argc, char *argv[]) try
 
 		const auto &noteNext = nbsNoteList[next_i];
 
-		//重复音，递增
-		if (noteCurr.tick == noteNext.tick &&
-			noteCurr.key == noteNext.key)
-		{
-			listLayerEmplace(noteCurr, szLayerIndex);
-			++szLayerIndex;
-		}
-		else
-		{
-			listLayerEmplace(noteCurr, szLayerIndex);
-			szLayerIndex = 0;
-		}
+		listLayerEmplace(noteCurr, szLayerIndex);
+
+		
+		szLayerIndex = 
+			noteCurr.tick == noteNext.tick &&
+			noteCurr.key == noteNext.key
+			? szLayerIndex + 1//重复音，递增
+			: 0;//非重复，归零
 	}
 
 	//复用，这里解释方式不同

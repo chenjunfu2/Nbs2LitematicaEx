@@ -334,7 +334,7 @@ struct NoteVal2
 {
 	std::unordered_map<NBS_File::BYTE, size_t> mapInstrumentIndex;//音色->调色板索引
 	std::vector<NBS_File::BYTE> listInstrumentMap;//调色板索引->音色
-	std::vector<size_t> listEncodeInstrument;//调色板索引形式的音符序列
+	//std::vector<size_t> listEncodeInstrument;//调色板索引形式的音符序列
 };
 
 NoteVal2 ToNoteVal2(const MyNoteList &listNote)
