@@ -261,10 +261,10 @@ public:
 		);
 
 		//修复头部数据
-		NBS_File::Header &fixHeader = fileNBS.header;
+		NBS_File::Header fixHeader = fileNBS.header;
 
 		//这个字段溢出不影响实际使用，总是忽略此字段，因为实际长度是动态读取决定的，这个只是展示数据
-		fixHeader.song_length = listNote.empty()
+		fixHeader.song_length = sortedNoteList.empty()
 									? 0
 									: (NBS_File::SHORT)sortedNoteList.back().tick;
 
