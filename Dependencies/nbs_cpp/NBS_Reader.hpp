@@ -169,8 +169,8 @@ do\
 				NORM_READ(note.instrument);
 				NORM_READ(note.key);
 				COND_READ(note.velocity, header.version >= 4, (NBS_File::BYTE)100);
-				COND_READ(note.panning, header.version >= 4, (NBS_File::BYTE)0);
-				COND_READ(note.pitch, header.version >= 4, (NBS_File::SSHORT)0);
+				COND_READ(note.panning, header.version >= 4, (NBS_File::BYTE)100);//100->0 中心
+				COND_READ(note.pitch, header.version >= 4, (NBS_File::SSHORT)100);//100->0 中心
 
 				listNote.push_back(std::move(note));
 			}
@@ -207,6 +207,10 @@ do\
 
 		NBS_File::BYTE u8InstrumentCount{};
 		NORM_READ(u8InstrumentCount);
+		if (u8InstrumentCount > 240)//240 max, docs: The amount of custom instruments (0-240).
+		{
+			return false;
+		}
 
 		for (NBS_File::BYTE i = 0; i < u8InstrumentCount; ++i)
 		{

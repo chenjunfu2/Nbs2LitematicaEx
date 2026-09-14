@@ -54,7 +54,7 @@ const NormalBlock stAirBlock = NormalBlock{ MU8STR("minecraft:air")};
 const NormalBlock stSmoothStoneBlock = NormalBlock{ MU8STR("minecraft:smooth_stone")};
 const NormalBlock stDirtBlock = NormalBlock{ MU8STR("minecraft:dirt") };
 const NormalBlock stOakPlanksBlock = NormalBlock{ MU8STR("minecraft:oak_planks") };
-const NormalBlock stCobblestoneBlock = NormalBlock{ MU8STR("minecraft:cobblestone") };
+const NormalBlock stStoneBlock = NormalBlock{ MU8STR("minecraft:stone") };
 const NormalBlock stSandBlock = NormalBlock{ MU8STR("minecraft:sand") };
 const NormalBlock stGlassBlock = NormalBlock{ MU8STR("minecraft:glass") };
 const NormalBlock stWhiteWoolBlock = NormalBlock{ MU8STR("minecraft:white_wool") };
@@ -166,7 +166,7 @@ public:
 	{
 		stDirtBlock.ToCompound(),
 		stOakPlanksBlock.ToCompound(),
-		stCobblestoneBlock.ToCompound(),
+		stStoneBlock.ToCompound(),
 		stSandBlock.ToCompound(),
 		stGlassBlock.ToCompound(),
 		stWhiteWoolBlock.ToCompound(),

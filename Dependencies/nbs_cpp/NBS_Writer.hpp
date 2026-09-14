@@ -137,17 +137,29 @@ do\
 	}
 
 	template<typename Stream>
-	static bool WriteNotes(const NBS_File::Header &header, const NBS_File::ListNote &listNote, Stream &tStream)
+	static bool WriteNotes(const NBS_File::Header &header, const NBS_File::ListNote &sortedNoteList, Stream &tStream)
 	{
-		// 按tick排序音符，同tick按照layer排序
-		std::vector<NBS_File::Note> sortedNoteList = listNote;
+		if (sortedNoteList.empty())//空
+		{
+			//写入tick结束标记
+			NORM_WRITE((NBS_File::SHORT)0);
+			return true;
+		}
+
+		//获取大小
 		size_t szSortedNoteSize = sortedNoteList.size();
-		std::sort(sortedNoteList.begin(), sortedNoteList.end(),
-			[](const NBS_File::Note &a, const NBS_File::Note &b)
+
+		//至少保证有1元素
+		//校验数据，确保没有同层重复音
+		for (size_t i = 1; i < szSortedNoteSize; ++i)
+		{
+			const NBS_File::Note *lastNote = &sortedNoteList[i - 1];
+			const NBS_File::Note *curNote = &sortedNoteList[i];
+			if (lastNote->tick == curNote->tick && lastNote->layer == curNote->layer)
 			{
-				return a.tick != b.tick ? a.tick < b.tick : a.layer < b.layer;
+				return false;
 			}
-		);
+		}
 
 		//遍历tick
 		size_t noteIndex = 0;
@@ -216,7 +228,7 @@ do\
 	static bool WriteInstruments(const NBS_File::Header &header, const NBS_File::ListInstrument &listInstrument, Stream &tStream)
 	{
 		//写入乐器数量
-		if (listInstrument.size() > UINT8_MAX)
+		if (listInstrument.size() > 240)//240 max, docs: The amount of custom instruments (0-240).
 		{
 			return false;
 		}
@@ -239,11 +251,35 @@ public:
 	requires(NBS_Writer_Helper::OutputStreamLike<Stream>)
 	static bool WriteNBS(const NBS_File &fileNBS, Stream &tStream)
 	{
+		// 按tick排序音符，同tick按照layer排序
+		NBS_File::ListNote sortedNoteList = fileNBS.listNote;
+		std::sort(sortedNoteList.begin(), sortedNoteList.end(),
+			[](const NBS_File::Note &a, const NBS_File::Note &b)
+			{
+				return a.tick != b.tick ? a.tick < b.tick : a.layer < b.layer;
+			}
+		);
+
+		//修复头部数据
+		NBS_File::Header &fixHeader = fileNBS.header;
+
+		//这个字段溢出不影响实际使用，总是忽略此字段，因为实际长度是动态读取决定的，这个只是展示数据
+		fixHeader.song_length = listNote.empty()
+									? 0
+									: (NBS_File::SHORT)sortedNoteList.back().tick;
+
+
+		if (fileNBS.listLayer.size() > UINT16_MAX)
+		{
+			return false;
+		}
+		fixHeader.song_layers = (NBS_File::SHORT)fileNBS.listLayer.size();
+
 		return
-			WriteHeader(fileNBS.header, tStream) &&
-			WriteNotes(fileNBS.header, fileNBS.listNote, tStream) &&
-			WriteLayers(fileNBS.header, fileNBS.listLayer, tStream) &&
-			WriteInstruments(fileNBS.header, fileNBS.listInstrument, tStream);
+			WriteHeader(fixHeader, tStream) &&
+			WriteNotes(fixHeader, sortedNoteList, tStream) &&
+			WriteLayers(fixHeader, fileNBS.listLayer, tStream) &&
+			WriteInstruments(fixHeader, fileNBS.listInstrument, tStream);
 	}
 
 #undef NORM_WRITE

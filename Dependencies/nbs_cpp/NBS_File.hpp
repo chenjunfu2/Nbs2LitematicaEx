@@ -133,7 +133,7 @@ public:
 		INT id;				//乐器ID（在乐器列表中的索引，从0开始）
 		STR name;			//乐器名称
 		STR file;			//自定义音效文件路径（空字符串表示使用默认音色）
-		BYTE pitch;			//音高偏移（默认45，对应C#，范围0-255）
+		BYTE pitch;			//音高偏移（默认45，对应F#4，范围0-255）
 		BOOL press_key;		//是否按下按键（默认true）
 	};
 
