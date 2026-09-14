@@ -246,11 +246,11 @@ struct NoteVal
 {
 	std::unordered_map<MyNote2, size_t> mapNote2Index;
 	std::vector<MyNote2> listNote2Map;
-	std::vector<size_t> listEncodeNote2;
+	//std::vector<size_t> listEncodeNote2;
 
 	std::unordered_map<NBS_File::BYTE, size_t> mapInstrumentIndex;
 	std::vector<NBS_File::BYTE> listInstrumentMap;
-	std::vector<size_t> listEncodeInstrument;
+	//std::vector<size_t> listEncodeInstrument;
 };
 
 NoteVal ToNoteVal(const MyNoteList2 &listNote2)
@@ -278,7 +278,7 @@ NoteVal ToNoteVal(const MyNoteList2 &listNote2)
 			{
 				valNote.listInstrumentMap.push_back(it.instrument);
 			}
-			valNote.listEncodeInstrument.push_back(itEmplace->second);
+			//valNote.listEncodeInstrument.push_back(itEmplace->second);
 		}
 		
 		{
@@ -289,7 +289,7 @@ NoteVal ToNoteVal(const MyNoteList2 &listNote2)
 				valNote.listNote2Map.push_back(it);
 			}
 			//如果插入失败，那么itEmplace获得的是阻止插入的元素，相当于查找到它的映射，否则是刚才插入的元素
-			valNote.listEncodeNote2.push_back(itEmplace->second);//插入编码数组中，这样编码数组利用size值替代了listNote2
+			//valNote.listEncodeNote2.push_back(itEmplace->second);//插入编码数组中，这样编码数组利用size值替代了listNote2
 		}
 	}
 
