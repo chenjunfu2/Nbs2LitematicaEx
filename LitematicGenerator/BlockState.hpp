@@ -51,7 +51,6 @@ public:
 };
 
 const NormalBlock stAirBlock = NormalBlock{ MU8STR("minecraft:air")};
-const NormalBlock stSmoothStoneBlock = NormalBlock{ MU8STR("minecraft:smooth_stone")};
 const NormalBlock stDirtBlock = NormalBlock{ MU8STR("minecraft:dirt") };
 const NormalBlock stOakPlanksBlock = NormalBlock{ MU8STR("minecraft:oak_planks") };
 const NormalBlock stStoneBlock = NormalBlock{ MU8STR("minecraft:stone") };
@@ -225,85 +224,8 @@ public:
 			{MU8STR("Name"), strBlockName},
 			{MU8STR("Properties"), NBT_Type::Compound
 				{
-					{MU8STR("instrument"),GetInstrumentStr(enInstrument)},
+					{MU8STR("instrument"), GetInstrumentStr(enInstrument)},
 					{MU8STR("note"), GetNoteStr(u8Note)},
-					{MU8STR("powered"),GetPoweredStr(bPowered)},
-				},
-			},
-		};
-	}
-
-};
-
-
-struct RepeaterBlock
-{
-public:
-	static inline const NBT_Type::String strBlockName = MU8STR("minecraft:repeater");
-
-	enum class Facing : uint8_t
-	{
-		north,//default
-		east,
-		south,
-		west,
-
-		ENUM_END,//end flag
-	};
-
-	static inline const NBT_Type::String FacingStr[] =
-	{
-		MU8STR("north"),
-		MU8STR("east"),
-		MU8STR("south"),
-		MU8STR("west"),
-	};
-
-public:
-	uint8_t u8Delay = 1;
-	Facing enFacing = Facing::north;
-	bool bLocked = false;
-	bool bPowered = false;
-
-public:
-	static NBT_Type::String GetDelayStr(uint8_t u8Delay) noexcept
-	{
-		if (u8Delay < 1 || u8Delay > 4)//中继器只有1、2、3、4挡位
-		{
-			u8Delay = 1;//默认挡位
-		}
-
-		return BlockStateUtil::Uint8ToNbtString(u8Delay);
-	}
-
-	static NBT_Type::String GetFacingStr(Facing enFacing) noexcept
-	{
-		return (uint8_t)enFacing < (uint8_t)Facing::ENUM_END
-			? FacingStr[(uint8_t)enFacing]
-			: FacingStr[(uint8_t)Facing::north];
-	}
-
-	static NBT_Type::String GetLockedStr(bool bLocked) noexcept
-	{
-		return BlockStateUtil::BoolToNbtString(bLocked);
-	}
-
-	static NBT_Type::String GetPoweredStr(bool bPowered) noexcept
-	{
-		return BlockStateUtil::BoolToNbtString(bPowered);
-	}
-
-public:
-	NBT_Type::Compound ToCompound(void) const
-	{
-		return NBT_Type::Compound
-		{
-			{MU8STR("Name"), strBlockName},
-			{MU8STR("Properties"), NBT_Type::Compound
-				{
-					{MU8STR("delay"), GetDelayStr(u8Delay)},
-					{MU8STR("facing"), GetFacingStr(enFacing)},
-					{MU8STR("locked"), GetLockedStr(bLocked)},
 					{MU8STR("powered"), GetPoweredStr(bPowered)},
 				},
 			},
